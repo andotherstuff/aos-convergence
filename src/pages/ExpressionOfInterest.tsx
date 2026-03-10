@@ -4,6 +4,8 @@ import { SiteLayout } from '@/components/SiteLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Eye, EyeOff, Download } from 'lucide-react';
+import { generateSecretKey, getPublicKey, nip19 } from 'nostr-tools';
 
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mnjgpgjb';
 
@@ -12,6 +14,37 @@ const ExpressionOfInterest = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
 
+  // Nostr identity state
+  const [hasNostr, setHasNostr] = useState<'yes' | 'no' | null>(null);
+  const [npub, setNpub] = useState('');
+  const [generatedNsec, setGeneratedNsec] = useState('');
+  const [generatedNpub, setGeneratedNpub] = useState('');
+  const [showNsec, setShowNsec] = useState(false);
+  const [nsecDownloaded, setNsecDownloaded] = useState(false);
+
+  const handleGenerateKey = () => {
+    const sk = generateSecretKey();
+    const nsec = nip19.nsecEncode(sk);
+    const pubkey = getPublicKey(sk);
+    const npubStr = nip19.npubEncode(pubkey);
+    setGeneratedNsec(nsec);
+    setGeneratedNpub(npubStr);
+  };
+
+  const handleDownloadNsec = () => {
+    const blob = new Blob([generatedNsec], { type: 'text/plain; charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nostr-${generatedNpub.slice(5, 13)}.nsec.txt`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setNsecDownloaded(true);
+  };
+
   useSeoMeta({
     title: 'Expression of Interest — AOS Convergence Oslo',
     description: 'Apply to attend AOS Convergence Oslo 2026. Space is extremely limited.',
@@ -19,6 +52,21 @@ const ExpressionOfInterest = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate Nostr identity
+    if (!hasNostr) {
+      setError('Please indicate whether you have a Nostr npub.');
+      return;
+    }
+    if (hasNostr === 'yes' && !npub.trim().startsWith('npub1')) {
+      setError('Please enter a valid npub (starts with npub1).');
+      return;
+    }
+    if (hasNostr === 'no' && !nsecDownloaded) {
+      setError('Please generate your keypair and download your secret key before submitting.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
 
@@ -93,9 +141,125 @@ const ExpressionOfInterest = () => {
             <FormGroup label="Email address" required>
               <Input name="email" type="email" required className="rounded-[10px]" />
             </FormGroup>
-            <FormGroup label="Nostr npub">
-              <Input name="nostr_npub" placeholder="npub1..." className="rounded-[10px]" />
-            </FormGroup>
+            {/* Nostr Identity */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground block">
+                Nostr npub <span className="text-destructive ml-0.5">*</span>
+              </label>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Nostr is a decentralized protocol for communication and identity.
+                Your npub is your public identifier on the network — think of it as your open, portable username.
+                If accepted, we will use your npub to grant you access to the event details on this site.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setHasNostr('yes'); setGeneratedNsec(''); setGeneratedNpub(''); setNsecDownloaded(false); }}
+                  className={`flex-1 py-2 rounded-[10px] border text-sm font-medium transition-colors ${hasNostr === 'yes' ? 'bg-foreground text-background border-foreground' : 'border-border text-foreground hover:bg-secondary'}`}
+                >
+                  I have an npub
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setHasNostr('no'); setNpub(''); }}
+                  className={`flex-1 py-2 rounded-[10px] border text-sm font-medium transition-colors ${hasNostr === 'no' ? 'bg-foreground text-background border-foreground' : 'border-border text-foreground hover:bg-secondary'}`}
+                >
+                  I need to create one
+                </button>
+              </div>
+
+              {hasNostr === 'yes' && (
+                <Input
+                  name="nostr_npub"
+                  value={npub}
+                  onChange={(e) => setNpub(e.target.value)}
+                  placeholder="npub1..."
+                  required
+                  className="rounded-[10px]"
+                />
+              )}
+
+              {hasNostr === 'no' && !generatedNsec && (
+                <div className="bg-secondary rounded-[14px] p-5 space-y-3">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Nostr uses public-key cryptography. When you generate a keypair, you get two keys:
+                  </p>
+                  <ul className="text-xs text-muted-foreground leading-relaxed space-y-1">
+                    <li><strong className="text-foreground">npub</strong> (public key) — your identity, safe to share with anyone.</li>
+                    <li><strong className="text-foreground">nsec</strong> (secret key) — your password, which you must keep private and never share. Anyone with your nsec has full control of your Nostr identity.</li>
+                  </ul>
+                  <Button
+                    type="button"
+                    onClick={handleGenerateKey}
+                    className="w-full h-10 rounded-[10px] bg-foreground text-background hover:bg-foreground/90 text-sm"
+                  >
+                    Generate my Nostr keypair
+                  </Button>
+                </div>
+              )}
+
+              {hasNostr === 'no' && generatedNsec && (
+                <div className="bg-secondary rounded-[14px] p-5 space-y-4">
+                  {/* npub display */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-foreground block">Your npub (public key)</label>
+                    <Input
+                      value={generatedNpub}
+                      readOnly
+                      className="rounded-[10px] font-mono text-xs bg-background"
+                    />
+                    <p className="text-xs text-muted-foreground">This is your public identity. It will be included in your application.</p>
+                  </div>
+
+                  {/* nsec display + download */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-foreground block">Your nsec (secret key)</label>
+                    <div className="relative">
+                      <Input
+                        type={showNsec ? 'text' : 'password'}
+                        value={generatedNsec}
+                        readOnly
+                        className="rounded-[10px] font-mono text-xs pr-10 bg-background"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNsec(!showNsec)}
+                        className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showNsec ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 rounded-[10px] border border-amber-200">
+                    <p className="text-xs font-semibold text-amber-800 mb-1">Save your secret key</p>
+                    <p className="text-xs text-amber-900 leading-relaxed">
+                      Your nsec is the only way to access your Nostr identity. There is no "forgot password" — if you lose it, it is gone forever.
+                      Download the file below and store it somewhere safe.
+                    </p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleDownloadNsec}
+                    className="w-full h-10 rounded-[10px] bg-foreground text-background hover:bg-foreground/90 text-sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {nsecDownloaded ? 'Downloaded — download again' : 'Download secret key file'}
+                  </Button>
+
+                  {nsecDownloaded && (
+                    <p className="text-xs text-green-700 font-medium text-center">
+                      Key file saved. Keep it somewhere secure.
+                    </p>
+                  )}
+
+                  {/* Hidden input to submit the generated npub */}
+                  <input type="hidden" name="nostr_npub" value={generatedNpub} />
+                </div>
+              )}
+            </div>
             <FormGroup label="Location (City / Country)">
               <Input name="location" className="rounded-[10px]" />
             </FormGroup>

@@ -2,6 +2,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ScrollToTop } from "./components/ScrollToTop";
 
 import Landing from "./pages/Landing";
+import About from "./pages/About";
+import Program from "./pages/Program";
 import EventDetails from "./pages/EventDetails";
 import ExpressionOfInterest from "./pages/ExpressionOfInterest";
 import { NIP19Page } from "./pages/NIP19Page";
@@ -13,6 +15,8 @@ export function AppRouter() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/program" element={<Program />} />
         <Route path="/event" element={<EventDetails />} />
         <Route path="/interest" element={<ExpressionOfInterest />} />
         {/* NIP-19 route for npub1, note1, naddr1, nevent1, nprofile1 */}

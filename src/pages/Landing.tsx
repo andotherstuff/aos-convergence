@@ -77,12 +77,20 @@ const Landing = () => {
               A curated three-day gathering for builders, researchers, funders, and community leaders
               actively working to expand human agency through open systems.
             </p>
-            <Link
-              to="/interest"
-              className="inline-flex items-center px-6 py-3 rounded-full border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"
-            >
-              Apply to Attend
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/interest"
+                className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
+              >
+                Apply to Attend
+              </Link>
+              <Link
+                to="/about"
+                className="inline-flex items-center px-6 py-3 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Learn More
+              </Link>
+            </div>
           </div>
 
           <div className="bg-card rounded-[28px] p-8 shadow-[0_18px_45px_rgba(0,0,0,0.08)] border border-border">

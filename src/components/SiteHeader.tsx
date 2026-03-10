@@ -32,7 +32,9 @@ export function SiteHeader() {
           </Link>
           <div className="hidden min-[721px]:flex items-center gap-[1.4rem] text-[0.9rem] text-[#716f6a]">
             <NavLink to="/" active={isHome}>Home</NavLink>
-            <NavLink to="/interest" active={location.pathname === '/interest'}>Apply to Attend</NavLink>
+            <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
+            <NavLink to="/program" active={location.pathname === '/program'}>Program</NavLink>
+            <NavLink to="/interest" active={location.pathname === '/interest'}>Apply</NavLink>
             {currentUser && (
               <Button
                 variant="ghost"
