@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useEventDetails } from '@/hooks/useEventDetails';
 
 export function SiteFooter() {
+  const { data: eventData } = useEventDetails();
+  const isApproved = !!eventData;
   return (
     <footer className="border-t border-[#dedbd5] py-6 pb-[1.8rem] mt-auto text-[0.8rem] text-[#716f6a] max-[720px]:py-5 max-[720px]:pb-6" style={{ background: '#fbfaf8' }}>
       <div className="w-full max-w-[1120px] mx-auto px-6 max-[720px]:px-4">
@@ -20,7 +23,10 @@ export function SiteFooter() {
           </div>
           <div className="flex flex-wrap gap-[0.85rem]">
             <Link to="/" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Home</Link>
-            <Link to="/interest" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Apply to Attend</Link>
+            {isApproved
+              ? <Link to="/event" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Event Details</Link>
+              : <Link to="/interest" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Apply to Attend</Link>
+            }
             <a href="https://andotherstuff.org" target="_blank" rel="noopener noreferrer" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">
               andotherstuff.org
             </a>

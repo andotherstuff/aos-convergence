@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useLoginActions } from '@/hooks/useLoginActions';
+import { useEventDetails } from '@/hooks/useEventDetails';
 import { Button } from '@/components/ui/button';
 
 export function SiteHeader() {
@@ -8,6 +9,8 @@ export function SiteHeader() {
   const isHome = location.pathname === '/';
   const { currentUser } = useLoggedInAccounts();
   const { logout } = useLoginActions();
+  const { data: eventData } = useEventDetails();
+  const isApproved = !!eventData;
 
   return (
     <header className="sticky top-0 z-40 border-b border-[rgba(222,219,213,0.9)]" style={{ backdropFilter: 'blur(14px)', background: 'rgba(251, 250, 248, 0.92)' }}>
@@ -34,7 +37,8 @@ export function SiteHeader() {
             <NavLink to="/" active={isHome}>Home</NavLink>
             <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
             <NavLink to="/program" active={location.pathname === '/program'}>Program</NavLink>
-            <NavLink to="/interest" active={location.pathname === '/interest'}>Apply</NavLink>
+            {!isApproved && <NavLink to="/interest" active={location.pathname === '/interest'}>Apply</NavLink>}
+            {isApproved && <NavLink to="/event" active={location.pathname === '/event'}>Event Details</NavLink>}
             {currentUser && (
               <Button
                 variant="ghost"
