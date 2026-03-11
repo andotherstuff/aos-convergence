@@ -23,10 +23,7 @@ export function SiteFooter() {
           </div>
           <div className="flex flex-wrap gap-[0.85rem]">
             <Link to="/" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Home</Link>
-            {isApproved
-              ? <Link to="/event" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Event Details</Link>
-              : <Link to="/interest" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Apply to Attend</Link>
-            }
+            {!isApproved && <Link to="/interest" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Apply to Attend</Link>}
             <a href="https://andotherstuff.org" target="_blank" rel="noopener noreferrer" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">
               andotherstuff.org
             </a>

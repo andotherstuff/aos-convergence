@@ -38,7 +38,6 @@ export function SiteHeader() {
             <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
             <NavLink to="/program" active={location.pathname === '/program'}>Program</NavLink>
             {!isApproved && <NavLink to="/interest" active={location.pathname === '/interest'}>Apply</NavLink>}
-            {isApproved && <NavLink to="/event" active={location.pathname === '/event'}>Event Details</NavLink>}
             {currentUser && (
               <Button
                 variant="ghost"
