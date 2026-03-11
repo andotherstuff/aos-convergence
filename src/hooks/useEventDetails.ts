@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from './useCurrentUser';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'https://aos-convergence-api.protestnet.workers.dev';
+import { API_BASE } from '@/lib/apiBase';
+import { createNip98Token } from '@/lib/nip98Auth';
 
 export interface ScheduleItem {
   time: string;
@@ -35,20 +35,7 @@ export function useEventDetails() {
       }
 
       const url = `${API_BASE}/api/event`;
-
-      // Create a NIP-98 auth event (kind 27235)
-      const authEvent = await user.signer.signEvent({
-        kind: 27235,
-        content: '',
-        tags: [
-          ['u', url],
-          ['method', 'GET'],
-        ],
-        created_at: Math.floor(Date.now() / 1000),
-      });
-
-      // Base64-encode the signed event as the NIP-98 token
-      const token = btoa(JSON.stringify(authEvent));
+      const token = await createNip98Token(user, url, 'GET');
 
       const response = await fetch(url, {
         method: 'GET',

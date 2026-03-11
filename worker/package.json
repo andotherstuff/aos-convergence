@@ -4,7 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "approved:check": "node scripts/approved-npubs.mjs check",
+    "approved:list": "node scripts/approved-npubs.mjs list",
+    "approved:csv": "node scripts/approved-npubs.mjs csv",
+    "approved:push": "node scripts/approved-npubs.mjs csv | wrangler secret put APPROVED_NPUBS"
   },
   "dependencies": {
     "nostr-tools": "^2.13.0"

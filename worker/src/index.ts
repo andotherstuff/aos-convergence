@@ -1,8 +1,26 @@
 import { verifyEvent, nip19 } from 'nostr-tools';
 
 interface Env {
-  APPROVED_NPUBS: string;
+  APPROVALS?: KVNamespace;
+  APPROVED_NPUBS?: string; // Legacy fallback
+  ADMIN_PUBKEYS?: string; // Comma-separated admin identities (npub or hex)
   SIGNAL_GROUP_LINK: string;
+}
+
+interface ApprovalRecord {
+  npub: string;
+  addedAt: string;
+  addedBy: string;
+}
+
+interface NostrAuthEvent {
+  kind: number;
+  pubkey: string;
+  created_at: number;
+  tags: string[][];
+  content: string;
+  sig: string;
+  id: string;
 }
 
 // Event details — only returned to approved attendees.
@@ -64,10 +82,195 @@ function getEventDetails(signalGroupLink: string) {
 function corsHeaders(origin: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Max-Age': '86400',
   };
+}
+
+function jsonResponse(
+  body: Record<string, unknown>,
+  status: number,
+  headers: Record<string, string>,
+): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...headers, 'Content-Type': 'application/json' },
+  });
+}
+
+function approvalKey(npub: string): string {
+  return `approved:${npub}`;
+}
+
+function parseCsv(value: string | undefined): string[] {
+  if (!value) return [];
+  return value.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+function toHexPubkey(value: string): string {
+  const trimmed = value.trim();
+
+  if (/^[0-9a-f]{64}$/i.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+
+  const decoded = nip19.decode(trimmed);
+  if (decoded.type !== 'npub') {
+    throw new Error(`Expected npub or hex pubkey, got ${decoded.type}`);
+  }
+
+  return decoded.data.toLowerCase();
+}
+
+function canonicalizeNpub(value: string): string {
+  const decoded = nip19.decode(value.trim());
+  if (decoded.type !== 'npub') {
+    throw new Error(`Expected npub, got ${decoded.type}`);
+  }
+  return nip19.npubEncode(decoded.data);
+}
+
+function parseAuthEvent(token: string): NostrAuthEvent {
+  const decoded = atob(token);
+  return JSON.parse(decoded) as NostrAuthEvent;
+}
+
+function validateNip98(
+  event: NostrAuthEvent,
+  request: Request,
+  expectedMethod: string,
+): string | null {
+  if (event.kind !== 27235) return 'Invalid event kind';
+  if (!verifyEvent(event)) return 'Invalid event signature';
+
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - event.created_at) > 60) {
+    return 'Authorization token expired';
+  }
+
+  const urlTag = event.tags.find((t) => t[0] === 'u');
+  if (!urlTag?.[1]) return 'Missing URL tag';
+  if (urlTag[1] !== request.url) return 'URL tag does not match request URL';
+
+  const methodTag = event.tags.find((t) => t[0] === 'method');
+  if (!methodTag?.[1] || methodTag[1].toUpperCase() !== expectedMethod.toUpperCase()) {
+    return 'Invalid method tag';
+  }
+
+  return null;
+}
+
+async function verifyRequest(
+  request: Request,
+  headers: Record<string, string>,
+  expectedMethod: string,
+): Promise<NostrAuthEvent | Response> {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Nostr ')) {
+    return jsonResponse({ error: 'Missing NIP-98 authorization header' }, 401, headers);
+  }
+
+  const token = authHeader.slice(6);
+  let event: NostrAuthEvent;
+
+  try {
+    event = parseAuthEvent(token);
+  } catch {
+    return jsonResponse({ error: 'Invalid authorization token' }, 401, headers);
+  }
+
+  const validationError = validateNip98(event, request, expectedMethod);
+  if (validationError) {
+    return jsonResponse({ error: validationError }, 401, headers);
+  }
+
+  return event;
+}
+
+function ensureAdmin(event: NostrAuthEvent, env: Env, headers: Record<string, string>): Response | null {
+  const entries = parseCsv(env.ADMIN_PUBKEYS);
+  if (entries.length === 0) {
+    return jsonResponse({ error: 'Admin access not configured (ADMIN_PUBKEYS is empty)' }, 500, headers);
+  }
+
+  const allowed = new Set<string>();
+  try {
+    for (const entry of entries) {
+      allowed.add(toHexPubkey(entry));
+    }
+  } catch (error) {
+    return jsonResponse(
+      { error: error instanceof Error ? `Invalid ADMIN_PUBKEYS config: ${error.message}` : 'Invalid ADMIN_PUBKEYS config' },
+      500,
+      headers,
+    );
+  }
+
+  if (!allowed.has(event.pubkey)) {
+    return jsonResponse({ error: 'NOT_ADMIN' }, 403, headers);
+  }
+
+  return null;
+}
+
+async function isApprovedNpub(npub: string, env: Env): Promise<boolean> {
+  if (env.APPROVALS) {
+    const record = await env.APPROVALS.get(approvalKey(npub));
+    return record !== null;
+  }
+
+  // Legacy fallback only when KV binding is not configured.
+  return parseCsv(env.APPROVED_NPUBS).includes(npub);
+}
+
+async function listApprovals(env: Env): Promise<ApprovalRecord[]> {
+  if (!env.APPROVALS) return [];
+
+  const records: ApprovalRecord[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const page = await env.APPROVALS.list({ prefix: 'approved:', cursor, limit: 1000 });
+
+    const loaded = await Promise.all(
+      page.keys.map(async (key): Promise<ApprovalRecord | null> => {
+        const npub = key.name.slice('approved:'.length);
+        const raw = await env.APPROVALS?.get(key.name);
+        if (!raw) {
+          return {
+            npub,
+            addedAt: '',
+            addedBy: '',
+          };
+        }
+
+        try {
+          const parsed = JSON.parse(raw) as Partial<ApprovalRecord>;
+          return {
+            npub,
+            addedAt: parsed.addedAt ?? '',
+            addedBy: parsed.addedBy ?? '',
+          };
+        } catch {
+          return {
+            npub,
+            addedAt: '',
+            addedBy: '',
+          };
+        }
+      }),
+    );
+
+    for (const record of loaded) {
+      if (record) records.push(record);
+    }
+
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+
+  records.sort((a, b) => a.npub.localeCompare(b.npub));
+  return records;
 }
 
 export default {
@@ -75,7 +278,6 @@ export default {
     const origin = request.headers.get('Origin');
     const headers = corsHeaders(origin);
 
-    // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers });
     }
@@ -86,10 +288,19 @@ export default {
       return handleEventRequest(request, env, headers);
     }
 
-    return new Response(JSON.stringify({ error: 'Not found' }), {
-      status: 404,
-      headers: { ...headers, 'Content-Type': 'application/json' },
-    });
+    if (url.pathname === '/api/admin/approvals' && request.method === 'GET') {
+      return handleListApprovalsRequest(request, env, headers);
+    }
+
+    if (url.pathname === '/api/admin/approvals' && request.method === 'POST') {
+      return handleAddApprovalRequest(request, env, headers);
+    }
+
+    if (url.pathname.startsWith('/api/admin/approvals/') && request.method === 'DELETE') {
+      return handleDeleteApprovalRequest(request, env, headers, url);
+    }
+
+    return jsonResponse({ error: 'Not found' }, 404, headers);
   },
 } satisfies ExportedHandler<Env>;
 
@@ -98,89 +309,111 @@ async function handleEventRequest(
   env: Env,
   headers: Record<string, string>,
 ): Promise<Response> {
-  const jsonHeaders = { ...headers, 'Content-Type': 'application/json' };
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
 
-  // Extract the NIP-98 authorization token
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Nostr ')) {
-    return new Response(
-      JSON.stringify({ error: 'Missing NIP-98 authorization header' }),
-      { status: 401, headers: jsonHeaders },
-    );
+  const npub = nip19.npubEncode(verified.pubkey);
+  const approved = await isApprovedNpub(npub, env);
+
+  if (!approved) {
+    return jsonResponse({ error: 'Not on the approved attendee list', npub }, 403, headers);
   }
 
-  const token = authHeader.slice(6); // Remove "Nostr " prefix
+  return jsonResponse(getEventDetails(env.SIGNAL_GROUP_LINK), 200, headers);
+}
 
-  // Decode the base64 token to get the signed event
-  let event;
+async function handleListApprovalsRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
+
+  const adminError = ensureAdmin(verified, env, headers);
+  if (adminError) return adminError;
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  const items = await listApprovals(env);
+  return jsonResponse({ items, count: items.length }, 200, headers);
+}
+
+async function handleAddApprovalRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'POST');
+  if (verified instanceof Response) return verified;
+
+  const adminError = ensureAdmin(verified, env, headers);
+  if (adminError) return adminError;
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  let body: { npub?: string };
   try {
-    const decoded = atob(token);
-    event = JSON.parse(decoded);
+    body = await request.json();
   } catch {
-    return new Response(
-      JSON.stringify({ error: 'Invalid authorization token' }),
-      { status: 401, headers: jsonHeaders },
-    );
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, headers);
   }
 
-  // Validate the event
-  // 1. Must be kind 27235 (NIP-98 HTTP Auth)
-  if (event.kind !== 27235) {
-    return new Response(
-      JSON.stringify({ error: 'Invalid event kind' }),
-      { status: 401, headers: jsonHeaders },
-    );
+  if (!body.npub) {
+    return jsonResponse({ error: 'npub is required' }, 400, headers);
   }
 
-  // 2. Verify the signature
-  if (!verifyEvent(event)) {
-    return new Response(
-      JSON.stringify({ error: 'Invalid event signature' }),
-      { status: 401, headers: jsonHeaders },
-    );
+  let npub: string;
+  try {
+    npub = canonicalizeNpub(body.npub);
+  } catch (error) {
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid npub' }, 400, headers);
   }
 
-  // 3. Check timestamp — must be within 60 seconds
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - event.created_at) > 60) {
-    return new Response(
-      JSON.stringify({ error: 'Authorization token expired' }),
-      { status: 401, headers: jsonHeaders },
-    );
+  const now = new Date().toISOString();
+  const record: ApprovalRecord = {
+    npub,
+    addedAt: now,
+    addedBy: verified.pubkey,
+  };
+
+  await env.APPROVALS.put(approvalKey(npub), JSON.stringify(record));
+
+  return jsonResponse({ ok: true, item: record }, 200, headers);
+}
+
+async function handleDeleteApprovalRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+  url: URL,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'DELETE');
+  if (verified instanceof Response) return verified;
+
+  const adminError = ensureAdmin(verified, env, headers);
+  if (adminError) return adminError;
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
   }
 
-  // 4. Check URL tag matches
-  const urlTag = event.tags.find((t: string[]) => t[0] === 'u');
-  if (!urlTag) {
-    return new Response(
-      JSON.stringify({ error: 'Missing URL tag' }),
-      { status: 401, headers: jsonHeaders },
-    );
+  const value = decodeURIComponent(url.pathname.slice('/api/admin/approvals/'.length));
+  if (!value) {
+    return jsonResponse({ error: 'npub path parameter is required' }, 400, headers);
   }
 
-  // 5. Check method tag
-  const methodTag = event.tags.find((t: string[]) => t[0] === 'method');
-  if (!methodTag || methodTag[1].toUpperCase() !== 'GET') {
-    return new Response(
-      JSON.stringify({ error: 'Invalid method tag' }),
-      { status: 401, headers: jsonHeaders },
-    );
+  let npub: string;
+  try {
+    npub = canonicalizeNpub(value);
+  } catch (error) {
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid npub' }, 400, headers);
   }
 
-  // 6. Convert the pubkey to npub and check against approved list
-  const npub = nip19.npubEncode(event.pubkey);
-  const approvedNpubs = env.APPROVED_NPUBS.split(',').map((s: string) => s.trim());
-
-  if (!approvedNpubs.includes(npub)) {
-    return new Response(
-      JSON.stringify({ error: 'Not on the approved attendee list', npub }),
-      { status: 403, headers: jsonHeaders },
-    );
-  }
-
-  // Approved — return event details
-  return new Response(
-    JSON.stringify(getEventDetails(env.SIGNAL_GROUP_LINK)),
-    { status: 200, headers: jsonHeaders },
-  );
+  await env.APPROVALS.delete(approvalKey(npub));
+  return jsonResponse({ ok: true, npub }, 200, headers);
 }

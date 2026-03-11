@@ -1,0 +1,6 @@
+# One npub per line.
+# Lines beginning with # are ignored.
+# Copy this to approved_npubs.txt and replace with real attendee npubs.
+#
+# Example:
+# npub1abcdefghijklmnopqrstuvwxyz0123456789example000000000000000000
