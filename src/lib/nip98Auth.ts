@@ -12,7 +12,7 @@ interface SignableUser {
 export async function createNip98Token(
   user: SignableUser,
   url: string,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
 ): Promise<string> {
   const authEvent = await user.signer.signEvent({
     kind: 27235,

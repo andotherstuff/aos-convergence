@@ -9,8 +9,18 @@ interface Env {
 
 interface ApprovalRecord {
   npub: string;
+  name: string;
+  email: string;
   addedAt: string;
   addedBy: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+interface ApprovalInput {
+  npub?: string;
+  name?: string;
+  email?: string;
 }
 
 interface NostrAuthEvent {
@@ -82,7 +92,7 @@ function getEventDetails(signalGroupLink: string) {
 function corsHeaders(origin: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Max-Age': '86400',
   };
@@ -129,6 +139,56 @@ function canonicalizeNpub(value: string): string {
     throw new Error(`Expected npub, got ${decoded.type}`);
   }
   return nip19.npubEncode(decoded.data);
+}
+
+function sanitizeText(value: string | undefined, maxLength: number): string {
+  const trimmed = (value ?? '').trim();
+  return trimmed.slice(0, maxLength);
+}
+
+function normalizeEmail(value: string | undefined): string {
+  const email = sanitizeText(value, 320).toLowerCase();
+  if (!email) return '';
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    throw new Error('Invalid email format');
+  }
+  return email;
+}
+
+function normalizeApprovalInput(body: ApprovalInput): { name: string; email: string } {
+  return {
+    name: sanitizeText(body.name, 120),
+    email: normalizeEmail(body.email),
+  };
+}
+
+async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<ApprovalRecord | null> {
+  const raw = await kv.get(approvalKey(npub));
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<ApprovalRecord>;
+    return {
+      npub,
+      name: parsed.name ?? '',
+      email: parsed.email ?? '',
+      addedAt: parsed.addedAt ?? '',
+      addedBy: parsed.addedBy ?? '',
+      updatedAt: parsed.updatedAt ?? parsed.addedAt ?? '',
+      updatedBy: parsed.updatedBy ?? parsed.addedBy ?? '',
+    };
+  } catch {
+    return {
+      npub,
+      name: '',
+      email: '',
+      addedAt: '',
+      addedBy: '',
+      updatedAt: '',
+      updatedBy: '',
+    };
+  }
 }
 
 function parseAuthEvent(token: string): NostrAuthEvent {
@@ -236,29 +296,8 @@ async function listApprovals(env: Env): Promise<ApprovalRecord[]> {
     const loaded = await Promise.all(
       page.keys.map(async (key): Promise<ApprovalRecord | null> => {
         const npub = key.name.slice('approved:'.length);
-        const raw = await env.APPROVALS?.get(key.name);
-        if (!raw) {
-          return {
-            npub,
-            addedAt: '',
-            addedBy: '',
-          };
-        }
-
-        try {
-          const parsed = JSON.parse(raw) as Partial<ApprovalRecord>;
-          return {
-            npub,
-            addedAt: parsed.addedAt ?? '',
-            addedBy: parsed.addedBy ?? '',
-          };
-        } catch {
-          return {
-            npub,
-            addedAt: '',
-            addedBy: '',
-          };
-        }
+        if (!env.APPROVALS) return null;
+        return getApprovalRecord(env.APPROVALS, npub);
       }),
     );
 
@@ -294,6 +333,10 @@ export default {
 
     if (url.pathname === '/api/admin/approvals' && request.method === 'POST') {
       return handleAddApprovalRequest(request, env, headers);
+    }
+
+    if (url.pathname.startsWith('/api/admin/approvals/') && request.method === 'PUT') {
+      return handleUpdateApprovalRequest(request, env, headers, url);
     }
 
     if (url.pathname.startsWith('/api/admin/approvals/') && request.method === 'DELETE') {
@@ -356,7 +399,7 @@ async function handleAddApprovalRequest(
     return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
   }
 
-  let body: { npub?: string };
+  let body: ApprovalInput;
   try {
     body = await request.json();
   } catch {
@@ -374,16 +417,88 @@ async function handleAddApprovalRequest(
     return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid npub' }, 400, headers);
   }
 
+  let input: { name: string; email: string };
+  try {
+    input = normalizeApprovalInput(body);
+  } catch (error) {
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid request body' }, 400, headers);
+  }
+
+  const existing = await getApprovalRecord(env.APPROVALS, npub);
   const now = new Date().toISOString();
   const record: ApprovalRecord = {
     npub,
-    addedAt: now,
-    addedBy: verified.pubkey,
+    name: input.name || existing?.name || '',
+    email: input.email || existing?.email || '',
+    addedAt: existing?.addedAt || now,
+    addedBy: existing?.addedBy || verified.pubkey,
+    updatedAt: now,
+    updatedBy: verified.pubkey,
   };
 
   await env.APPROVALS.put(approvalKey(npub), JSON.stringify(record));
 
   return jsonResponse({ ok: true, item: record }, 200, headers);
+}
+
+async function handleUpdateApprovalRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+  url: URL,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'PUT');
+  if (verified instanceof Response) return verified;
+
+  const adminError = ensureAdmin(verified, env, headers);
+  if (adminError) return adminError;
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  const value = decodeURIComponent(url.pathname.slice('/api/admin/approvals/'.length));
+  if (!value) {
+    return jsonResponse({ error: 'npub path parameter is required' }, 400, headers);
+  }
+
+  let npub: string;
+  try {
+    npub = canonicalizeNpub(value);
+  } catch (error) {
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid npub' }, 400, headers);
+  }
+
+  let body: ApprovalInput;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, headers);
+  }
+
+  let input: { name: string; email: string };
+  try {
+    input = normalizeApprovalInput(body);
+  } catch (error) {
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid request body' }, 400, headers);
+  }
+
+  const existing = await getApprovalRecord(env.APPROVALS, npub);
+  if (!existing) {
+    return jsonResponse({ error: 'Approval record not found' }, 404, headers);
+  }
+
+  const now = new Date().toISOString();
+  const updated: ApprovalRecord = {
+    ...existing,
+    name: input.name,
+    email: input.email,
+    updatedAt: now,
+    updatedBy: verified.pubkey,
+  };
+
+  await env.APPROVALS.put(approvalKey(npub), JSON.stringify(updated));
+  return jsonResponse({ ok: true, item: updated }, 200, headers);
 }
 
 async function handleDeleteApprovalRequest(

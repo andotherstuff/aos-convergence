@@ -5,8 +5,18 @@ import { createNip98Token } from '@/lib/nip98Auth';
 
 export interface ApprovalRecord {
   npub: string;
+  name: string;
+  email: string;
   addedAt: string;
   addedBy: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface ApprovalUpsertInput {
+  npub: string;
+  name?: string;
+  email?: string;
 }
 
 interface ApprovalsResponse {
@@ -17,7 +27,7 @@ interface ApprovalsResponse {
 async function authFetch(
   user: NonNullable<ReturnType<typeof useCurrentUser>['user']>,
   url: string,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   body?: Record<string, unknown>,
 ): Promise<Response> {
   const token = await createNip98Token(user, url, method);
@@ -61,11 +71,27 @@ export function useAdminApprovals() {
   });
 
   const addMutation = useMutation({
-    mutationFn: async (npub: string) => {
+    mutationFn: async ({ npub, name, email }: ApprovalUpsertInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/approvals`;
-      const response = await authFetch(user, url, 'POST', { npub });
+      const response = await authFetch(user, url, 'POST', { npub, name, email });
+      if (!response.ok) {
+        throw await parseError(response);
+      }
+      return response.json();
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ npub, name, email }: ApprovalUpsertInput) => {
+      if (!user) throw new Error('Not logged in');
+
+      const url = `${API_BASE}/api/admin/approvals/${encodeURIComponent(npub)}`;
+      const response = await authFetch(user, url, 'PUT', { name, email });
       if (!response.ok) {
         throw await parseError(response);
       }
@@ -96,6 +122,7 @@ export function useAdminApprovals() {
     user,
     approvalsQuery,
     addMutation,
+    updateMutation,
     removeMutation,
   };
 }
