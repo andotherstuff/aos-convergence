@@ -2,10 +2,7 @@ name = "aos-convergence-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
-[vars]
-# Comma-separated approved npubs — edit this list to manage attendees.
-# In production, move this to a KV namespace or D1 database.
-APPROVED_NPUBS = "npub1wmr34t36fy03m8hvgl96zl3znndyzyaqhwmwdtshwmtkg03fetaqhjg240,npub18ams6ewn5aj2n3wt2qawzglx9mr4nzksxhvrdc4gzrecw7n5tvjqctp424,npub1pmwz736ys3mfhjdld4r36xqwfc5qkz7dwxdkmfu3qqd7kucvludsrm4nu6,npub1zutx6ty0t5r0v8el8yqz0l9h3z0n7c8w0v9t3k2l5m8n4p6j9r2w5e0q1u"
-
-# The Signal group link — only returned to approved attendees
-SIGNAL_GROUP_LINK = "https://signal.group/#CjQKIPNfnDwCkcYdM_SyZ5hPgRBwQpSE8-KM12y1WkKUcr6OEhBxoivrUKuX3_TqrKzps1AD"
+# APPROVED_NPUBS and SIGNAL_GROUP_LINK are stored as secrets.
+# Set them with:
+#   wrangler secret put APPROVED_NPUBS
+#   wrangler secret put SIGNAL_GROUP_LINK
