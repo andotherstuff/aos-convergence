@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { SiteLayout } from '@/components/SiteLayout';
 import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useLoginActions } from '@/hooks/useLoginActions';
+import { useEventDetails } from '@/hooks/useEventDetails';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -11,16 +12,19 @@ const Landing = () => {
   const { currentUser } = useLoggedInAccounts();
   const login = useLoginActions();
   const navigate = useNavigate();
+  const { data: eventData, error: eventError, isLoading: eventLoading } = useEventDetails();
   const [nsec, setNsec] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // After login, go to event page
+  const isNotApproved = currentUser && !eventLoading && eventError?.message === 'NOT_APPROVED';
+
+  // After login, if approved, go to event page
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && eventData) {
       navigate('/event');
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, eventData, navigate]);
 
   useSeoMeta({
     title: 'AOS Convergence — Oslo, May 2026',
@@ -94,48 +98,80 @@ const Landing = () => {
           </div>
 
           <div className="bg-card rounded-[28px] p-8 shadow-[0_18px_45px_rgba(0,0,0,0.08)] border border-border">
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground mb-6">
-              Already approved? Log in with Nostr
-            </h2>
+            {isNotApproved ? (
+              <>
+                <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground mb-4">
+                  You're not on the approved list yet
+                </h2>
+                <p className="text-sm leading-relaxed text-muted-foreground mb-6">
+                  Your Nostr identity was not found on our attendee list. If you haven't applied yet, you can submit an application below.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/interest"
+                    className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
+                  >
+                    Apply to Attend
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={() => { login.logout(); }}
+                    className="rounded-full px-6 py-3 h-auto"
+                  >
+                    Try a different key
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground mb-6">
+                  Already approved? Log in with Nostr
+                </h2>
 
-            <div className="space-y-4">
-              <Button
-                onClick={handleExtensionLogin}
-                disabled={loading}
-                className="w-full h-12 rounded-xl bg-foreground text-background hover:bg-foreground/90"
-              >
-                {loading ? 'Connecting...' : 'Log in with Extension (NIP-07)'}
-              </Button>
+                <div className="space-y-4">
+                  <Button
+                    onClick={handleExtensionLogin}
+                    disabled={loading}
+                    className="w-full h-12 rounded-xl bg-foreground text-background hover:bg-foreground/90"
+                  >
+                    {loading ? 'Connecting...' : 'Log in with Extension (NIP-07)'}
+                  </Button>
 
-              <div className="relative flex items-center gap-4">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">or use a secret key</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
+                  <div className="relative flex items-center gap-4">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground">or use a secret key</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleNsecLogin(); }} className="space-y-3">
-                <Input
-                  type="password"
-                  value={nsec}
-                  onChange={(e) => { setNsec(e.target.value); setError(''); }}
-                  placeholder="nsec1..."
-                  className="h-12 rounded-xl"
-                  autoComplete="off"
-                />
-                <Button
-                  type="submit"
-                  variant="outline"
-                  disabled={loading || !nsec.trim()}
-                  className="w-full h-12 rounded-xl"
-                >
-                  Log in
-                </Button>
-              </form>
+                  <form onSubmit={(e) => { e.preventDefault(); handleNsecLogin(); }} className="space-y-3">
+                    <Input
+                      type="password"
+                      value={nsec}
+                      onChange={(e) => { setNsec(e.target.value); setError(''); }}
+                      placeholder="nsec1..."
+                      className="h-12 rounded-xl"
+                      autoComplete="off"
+                    />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      disabled={loading || !nsec.trim()}
+                      className="w-full h-12 rounded-xl"
+                    >
+                      Log in
+                    </Button>
+                  </form>
 
-              {error && (
-                <p className="text-sm text-red-600">{error}</p>
-              )}
-            </div>
+                  {error && (
+                    <p className="text-sm text-red-600">{error}</p>
+                  )}
+
+                  {currentUser && eventLoading && (
+                    <p className="text-sm text-muted-foreground text-center">Verifying your attendance...</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
