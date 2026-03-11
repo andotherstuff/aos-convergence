@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from './useCurrentUser';
 
-// In production, point this to your deployed Cloudflare Worker URL.
-// In development, the worker runs on a different port.
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://aos-convergence-api.protestnet.workers.dev';
 
 export interface ScheduleItem {
   time: string;
