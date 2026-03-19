@@ -9,7 +9,8 @@ export function SiteHeader() {
   const isHome = location.pathname === '/';
   const { currentUser } = useLoggedInAccounts();
   const { logout } = useLoginActions();
-  const { data: eventData } = useEventDetails();
+  const isAdmin = location.pathname === '/admin';
+  const { data: eventData } = useEventDetails({ enabled: !isAdmin });
   const isApproved = !!eventData;
 
   return (

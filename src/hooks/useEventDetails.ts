@@ -24,7 +24,7 @@ export interface EventDetailsData {
   };
 }
 
-export function useEventDetails() {
+export function useEventDetails({ enabled = true }: { enabled?: boolean } = {}) {
   const { user } = useCurrentUser();
 
   return useQuery<EventDetailsData>({
@@ -55,7 +55,7 @@ export function useEventDetails() {
 
       return response.json();
     },
-    enabled: !!user,
+    enabled: enabled && !!user,
     retry: false,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });

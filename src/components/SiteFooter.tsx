@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useEventDetails } from '@/hooks/useEventDetails';
 
 export function SiteFooter() {
-  const { data: eventData } = useEventDetails();
+  const location = useLocation();
+  const isAdmin = location.pathname === '/admin';
+  const { data: eventData } = useEventDetails({ enabled: !isAdmin });
   const isApproved = !!eventData;
   return (
     <footer className="border-t border-[#dedbd5] py-6 pb-[1.8rem] mt-auto text-[0.8rem] text-[#716f6a] max-[720px]:py-5 max-[720px]:pb-6" style={{ background: '#fbfaf8' }}>
