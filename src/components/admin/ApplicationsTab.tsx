@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/ui/dialog';
 import { FormspreeSubmission, useAdminApplications } from '@/hooks/useAdminApplications';
+import { ApplicationDetailDialog } from './ApplicationDetailDialog';
 import { Mail } from 'lucide-react';
 
 type StatusFilter = 'all' | 'pending' | 'accepted' | 'rejected';
@@ -37,16 +35,6 @@ function buildMailtoLink(email: string, name: string, accepted: boolean) {
         `Hi ${name},\n\nThank you for your interest in AOS Convergence. After careful review, we're unable to offer a spot at this time.\n\nWe appreciate your application and hope to connect in the future.\n\nBest,\nAOS Convergence Team`,
       );
   return `mailto:${email}?subject=${subject}&body=${body}`;
-}
-
-function ApplicationDetail({ label, value }: { label: string; value: string | undefined }) {
-  if (!value) return null;
-  return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-      <p className="text-sm text-foreground whitespace-pre-wrap">{value}</p>
-    </div>
-  );
 }
 
 interface Props {
@@ -170,102 +158,44 @@ export function ApplicationsTab({ isForbidden }: Props) {
         </div>
       )}
 
-      {/* Application detail dialog */}
-      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
-        {selected && (
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{selected.full_name || 'Application'}</DialogTitle>
-              <DialogDescription>
-                Submitted {new Date(selected._date).toLocaleDateString()} &middot;{' '}
-                <StatusBadge status={statusOf(selected)} />
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <ApplicationDetail label="Email" value={selected.email} />
-                <ApplicationDetail label="Location" value={selected.location} />
-                <ApplicationDetail label="Nostr npub" value={selected.nostr_npub} />
-                <ApplicationDetail label="HRF Opt-in" value={selected.hrf_opt_in === 'yes' ? 'Yes' : 'No'} />
-              </div>
-
-              <hr className="border-border" />
-
-              <ApplicationDetail label="What are you building?" value={selected.what_building} />
-              <ApplicationDetail label="Why AOS?" value={selected.why_aos} />
-              <ApplicationDetail label="Contribution" value={selected.contribution} />
-              <ApplicationDetail label="Alignment" value={selected.alignment} />
-              <ApplicationDetail label="Skin in the game" value={selected.skin_in_game} />
-              <ApplicationDetail label="Hard problem" value={selected.hard_problem} />
-              <ApplicationDetail label="Current stage" value={selected.current_stage} />
-
-              {(selected.link_website || selected.link_github || selected.link_nostr || selected.link_twitter || selected.link_other) && (
-                <>
-                  <hr className="border-border" />
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Links</p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { label: 'Website', url: selected.link_website },
-                        { label: 'GitHub', url: selected.link_github },
-                        { label: 'Nostr', url: selected.link_nostr },
-                        { label: 'Twitter', url: selected.link_twitter },
-                        { label: 'Other', url: selected.link_other },
-                      ]
-                        .filter((l) => l.url)
-                        .map((l) => (
-                          <a
-                            key={l.label}
-                            href={l.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs underline text-foreground hover:text-foreground/80"
-                          >
-                            {l.label}
-                          </a>
-                        ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              {statusOf(selected) === 'pending' ? (
-                <>
-                  <Button
-                    className="rounded-lg bg-green-600 hover:bg-green-700 text-white"
-                    disabled={isForbidden || decideMutation.isPending || !selected.nostr_npub}
-                    onClick={() => void handleDecide(selected, 'accepted')}
-                  >
-                    {decideMutation.isPending ? 'Processing...' : 'Accept'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-lg border-red-300 text-red-700 hover:bg-red-50"
-                    disabled={isForbidden || decideMutation.isPending}
-                    onClick={() => void handleDecide(selected, 'rejected')}
-                  >
-                    {decideMutation.isPending ? 'Processing...' : 'Reject'}
-                  </Button>
-                  {!selected.nostr_npub && (
-                    <p className="text-xs text-red-600">No npub provided — cannot accept without an npub.</p>
-                  )}
-                </>
-              ) : (
-                <a
-                  href={buildMailtoLink(selected.email, selected.full_name, statusOf(selected) === 'accepted')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+      <ApplicationDetailDialog
+        submission={selected}
+        onOpenChange={(open) => { if (!open) setSelected(null); }}
+        footer={selected && (
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {statusOf(selected) === 'pending' ? (
+              <>
+                <Button
+                  className="rounded-lg bg-green-600 hover:bg-green-700 text-white"
+                  disabled={isForbidden || decideMutation.isPending || !selected.nostr_npub}
+                  onClick={() => void handleDecide(selected, 'accepted')}
                 >
-                  <Mail className="h-4 w-4" />
-                  Send notification email
-                </a>
-              )}
-            </DialogFooter>
-          </DialogContent>
+                  {decideMutation.isPending ? 'Processing...' : 'Accept'}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="rounded-lg border-red-300 text-red-700 hover:bg-red-50"
+                  disabled={isForbidden || decideMutation.isPending}
+                  onClick={() => void handleDecide(selected, 'rejected')}
+                >
+                  {decideMutation.isPending ? 'Processing...' : 'Reject'}
+                </Button>
+                {!selected.nostr_npub && (
+                  <p className="text-xs text-red-600">No npub provided — cannot accept without an npub.</p>
+                )}
+              </>
+            ) : (
+              <a
+                href={buildMailtoLink(selected.email, selected.full_name, statusOf(selected) === 'accepted')}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <Mail className="h-4 w-4" />
+                Send notification email
+              </a>
+            )}
+          </DialogFooter>
         )}
-      </Dialog>
+      />
     </div>
   );
 }

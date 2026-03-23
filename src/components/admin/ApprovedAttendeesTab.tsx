@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ApprovalRecord, useAdminApprovals } from '@/hooks/useAdminApprovals';
+import { FormspreeSubmission, useAdminApplications } from '@/hooks/useAdminApplications';
 import { BulkUploadDialog } from './BulkUploadDialog';
+import { ApplicationDetailDialog } from './ApplicationDetailDialog';
 
 type EditState = Record<string, {
   name: string;
@@ -51,6 +53,7 @@ interface Props {
 
 export function ApprovedAttendeesTab({ isForbidden }: Props) {
   const { approvalsQuery, addMutation, updateMutation, removeMutation } = useAdminApprovals();
+  const { applicationsQuery } = useAdminApplications();
 
   const [npub, setNpub] = useState('');
   const [name, setName] = useState('');
@@ -58,9 +61,19 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
   const [message, setMessage] = useState('');
   const [edits, setEdits] = useState<EditState>({});
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [viewingApplication, setViewingApplication] = useState<FormspreeSubmission | null>(null);
 
   const list = approvalsQuery.data?.items ?? [];
   const loading = approvalsQuery.isLoading;
+
+  // Build npub → submission lookup from loaded applications
+  const submissionsByNpub = useMemo(() => {
+    const map = new Map<string, FormspreeSubmission>();
+    for (const sub of applicationsQuery.data?.submissions ?? []) {
+      if (sub.nostr_npub) map.set(sub.nostr_npub, sub);
+    }
+    return map;
+  }, [applicationsQuery.data]);
 
   useEffect(() => {
     const next: EditState = {};
@@ -271,6 +284,16 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                       >
                         Save
                       </Button>
+                      {submissionsByNpub.has(item.npub) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg"
+                          onClick={() => setViewingApplication(submissionsByNpub.get(item.npub)!)}
+                        >
+                          Application
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -290,6 +313,11 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       </div>
 
       <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} isForbidden={isForbidden} />
+
+      <ApplicationDetailDialog
+        submission={viewingApplication}
+        onOpenChange={(open) => { if (!open) setViewingApplication(null); }}
+      />
     </div>
   );
 }
