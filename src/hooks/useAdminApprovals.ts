@@ -10,6 +10,8 @@ export interface ApprovalRecord {
   tshirt_size: string;
   dietary_restrictions: string;
   mobility_concerns: string;
+  signal: string;
+  contact_email_only: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -23,6 +25,8 @@ export interface ApprovalUpsertInput {
   tshirt_size?: string;
   dietary_restrictions?: string;
   mobility_concerns?: string;
+  signal?: string;
+  contact_email_only?: string;
 }
 
 interface ApprovalsResponse {

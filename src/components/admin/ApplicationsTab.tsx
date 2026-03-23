@@ -9,9 +9,9 @@ import { Mail } from 'lucide-react';
 type StatusFilter = 'all' | 'pending' | 'accepted' | 'rejected';
 
 function statusOf(sub: FormspreeSubmission): 'pending' | 'accepted' | 'rejected' {
-  if (sub._decision?.status) return sub._decision.status;
-  // If the npub is already in the approved list (e.g. added directly),
-  // reflect that instead of showing a stale "pending" status.
+  // Use the actual approval list as source of truth for acceptance,
+  // not the decision record (which can be stale/orphaned).
+  if (sub._decision?.status === 'rejected') return 'rejected';
   if (sub._is_approved) return 'accepted';
   return 'pending';
 }

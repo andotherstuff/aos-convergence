@@ -15,6 +15,8 @@ interface ApprovalRecord {
   tshirt_size: string;
   dietary_restrictions: string;
   mobility_concerns: string;
+  signal: string;
+  contact_email_only: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -28,6 +30,8 @@ interface ApprovalInput {
   tshirt_size?: string;
   dietary_restrictions?: string;
   mobility_concerns?: string;
+  signal?: string;
+  contact_email_only?: string;
 }
 
 interface ApplicationDecision {
@@ -173,6 +177,7 @@ function normalizeEmail(value: string | undefined): string {
 
 function normalizeApprovalInput(body: ApprovalInput): {
   name: string; email: string; tshirt_size: string; dietary_restrictions: string; mobility_concerns: string;
+  signal: string; contact_email_only: string;
 } {
   return {
     name: sanitizeText(body.name, 120),
@@ -180,6 +185,8 @@ function normalizeApprovalInput(body: ApprovalInput): {
     tshirt_size: sanitizeText(body.tshirt_size, 10),
     dietary_restrictions: sanitizeText(body.dietary_restrictions, 500),
     mobility_concerns: sanitizeText(body.mobility_concerns, 500),
+    signal: sanitizeText(body.signal, 3),
+    contact_email_only: sanitizeText(body.contact_email_only, 3),
   };
 }
 
@@ -196,6 +203,8 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       tshirt_size: parsed.tshirt_size ?? '',
       dietary_restrictions: parsed.dietary_restrictions ?? '',
       mobility_concerns: parsed.mobility_concerns ?? '',
+      signal: parsed.signal ?? '',
+      contact_email_only: parsed.contact_email_only ?? '',
       addedAt: parsed.addedAt ?? '',
       addedBy: parsed.addedBy ?? '',
       updatedAt: parsed.updatedAt ?? parsed.addedAt ?? '',
@@ -209,6 +218,8 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       tshirt_size: '',
       dietary_restrictions: '',
       mobility_concerns: '',
+      signal: '',
+      contact_email_only: '',
       addedAt: '',
       addedBy: '',
       updatedAt: '',
@@ -467,6 +478,8 @@ async function handleAddApprovalRequest(
     tshirt_size: input.tshirt_size || existing?.tshirt_size || '',
     dietary_restrictions: input.dietary_restrictions || existing?.dietary_restrictions || '',
     mobility_concerns: input.mobility_concerns || existing?.mobility_concerns || '',
+    signal: input.signal || existing?.signal || '',
+    contact_email_only: input.contact_email_only || existing?.contact_email_only || '',
     addedAt: existing?.addedAt || now,
     addedBy: existing?.addedBy || verified.pubkey,
     updatedAt: now,
@@ -533,6 +546,8 @@ async function handleUpdateApprovalRequest(
     tshirt_size: input.tshirt_size,
     dietary_restrictions: input.dietary_restrictions,
     mobility_concerns: input.mobility_concerns,
+    signal: input.signal,
+    contact_email_only: input.contact_email_only,
     updatedAt: now,
     updatedBy: verified.pubkey,
   };
@@ -716,6 +731,8 @@ async function handleDecideApplication(
       tshirt_size: existing?.tshirt_size || '',
       dietary_restrictions: existing?.dietary_restrictions || '',
       mobility_concerns: existing?.mobility_concerns || '',
+      signal: existing?.signal || '',
+      contact_email_only: existing?.contact_email_only || '',
       addedAt: existing?.addedAt || now,
       addedBy: existing?.addedBy || verified.pubkey,
       updatedAt: now,

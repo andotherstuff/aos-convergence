@@ -13,6 +13,8 @@ type EditState = Record<string, {
   tshirt_size: string;
   dietary_restrictions: string;
   mobility_concerns: string;
+  signal: string;
+  contact_email_only: string;
 }>;
 
 function escapeCsv(value: string): string {
@@ -23,11 +25,13 @@ function escapeCsv(value: string): string {
 function downloadApprovalsCsv(list: ApprovalRecord[]) {
   const header = [
     'npub', 'name', 'email', 'tshirt_size', 'dietary_restrictions', 'mobility_concerns',
+    'signal', 'contact_email_only',
     'addedAt', 'addedBy', 'updatedAt', 'updatedBy',
   ];
   const rows = list.map((item) => [
     item.npub, item.name, item.email,
     item.tshirt_size, item.dietary_restrictions, item.mobility_concerns,
+    item.signal, item.contact_email_only,
     item.addedAt, item.addedBy, item.updatedAt, item.updatedBy,
   ]);
 
@@ -84,6 +88,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         tshirt_size: item.tshirt_size ?? '',
         dietary_restrictions: item.dietary_restrictions ?? '',
         mobility_concerns: item.mobility_concerns ?? '',
+        signal: item.signal ?? '',
+        contact_email_only: item.contact_email_only ?? '',
       };
     }
     setEdits(next);
@@ -131,6 +137,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         tshirt_size: edit.tshirt_size,
         dietary_restrictions: edit.dietary_restrictions,
         mobility_concerns: edit.mobility_concerns,
+        signal: edit.signal,
+        contact_email_only: edit.contact_email_only,
       });
       setMessage(`Saved updates for ${item.npub}.`);
     } catch (error) {
@@ -202,14 +210,16 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1340px]">
-          <div className="grid grid-cols-[280px_130px_170px_80px_130px_130px_100px_80px_140px] gap-3 px-4 py-3 bg-card border-b border-border">
+        <div className="min-w-[1490px]">
+          <div className="grid grid-cols-[280px_130px_170px_80px_130px_130px_60px_70px_100px_80px_140px] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">T-shirt</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Dietary</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Mobility</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Signal</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email only</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Updated</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Application</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Actions</p>
@@ -224,11 +234,12 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
               {sortedList.map((item) => {
                 const edit = edits[item.npub] ?? {
                   name: '', email: '', tshirt_size: '', dietary_restrictions: '', mobility_concerns: '',
+                  signal: '', contact_email_only: '',
                 };
                 return (
                   <div
                     key={item.npub}
-                    className="grid grid-cols-[280px_130px_170px_80px_130px_130px_100px_80px_140px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
+                    className="grid grid-cols-[280px_130px_170px_80px_130px_130px_60px_70px_100px_80px_140px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
                   >
                     <code className="text-xs break-all">{item.npub}</code>
                     <Input
@@ -275,6 +286,24 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                       className="h-9 rounded-lg"
                       disabled={isForbidden || busy}
                     />
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={edit.signal === 'yes'}
+                        onChange={(e) => updateEdit(item.npub, 'signal', e.target.checked ? 'yes' : '')}
+                        className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
+                        disabled={isForbidden || busy}
+                      />
+                    </div>
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={edit.contact_email_only === 'yes'}
+                        onChange={(e) => updateEdit(item.npub, 'contact_email_only', e.target.checked ? 'yes' : '')}
+                        className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
+                        disabled={isForbidden || busy}
+                      />
+                    </div>
                     <p className="text-xs text-muted-foreground break-all">{item.updatedAt || item.addedAt || '-'}</p>
                     <div>
                       {submissionsByNpub.has(item.npub) ? (
