@@ -58,7 +58,7 @@ interface Props {
 
 export function ApprovedAttendeesTab({ isForbidden }: Props) {
   const { approvalsQuery, addMutation, updateMutation, removeMutation } = useAdminApprovals();
-  const { applicationsQuery } = useAdminApplications();
+  const { applicationsQuery, decideMutation } = useAdminApplications();
 
   const [npub, setNpub] = useState('');
   const [name, setName] = useState('');
@@ -123,11 +123,25 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
     }
   };
 
-  const handleRemove = async (value: string) => {
+  const handleRemove = async (npubToRemove: string) => {
     setMessage('');
     try {
-      await removeMutation.mutateAsync(value);
-      setMessage('Attendee removed.');
+      await removeMutation.mutateAsync(npubToRemove);
+
+      // Also mark the application as declined so they don't revert to "pending"
+      const sub = submissionsByNpub.get(npubToRemove);
+      if (sub) {
+        try {
+          await decideMutation.mutateAsync({
+            submissionId: sub._submission_id,
+            status: 'rejected',
+          });
+        } catch {
+          // Non-fatal — approval was already removed
+        }
+      }
+
+      setMessage('Attendee removed and marked as declined.');
     } catch (error) {
       setMessage((error as Error).message || 'Failed to remove attendee.');
     }
@@ -271,7 +285,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Email only</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">HRF</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">App</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground"></p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Remove</p>
           </div>
 
           {loading ? (
