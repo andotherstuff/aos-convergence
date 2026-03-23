@@ -676,21 +676,43 @@ async function handleDecideApplication(
 
   const now = new Date().toISOString();
 
-  // If accepting and npub is provided, validate and create the approval record first
-  // so we don't store a decision if the npub is invalid
+  // Validate npub and email before writing anything, so a partial failure
+  // can't leave an approval record without a corresponding decision.
+  let npub: string | undefined;
+  let safeEmail = '';
   if (body.status === 'accepted' && body.npub) {
-    let npub: string;
     try {
       npub = canonicalizeNpub(body.npub);
     } catch (error) {
       return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid npub' }, 400, headers);
     }
 
+    try {
+      safeEmail = normalizeEmail(body.email);
+    } catch {
+      // Fall back to raw email if it doesn't pass strict validation
+      safeEmail = sanitizeText(body.email, 320).toLowerCase();
+    }
+  }
+
+  // Write the decision record first, so we never have an approval without a decision
+  const decision: ApplicationDecision = {
+    submissionId,
+    status: body.status,
+    decidedAt: now,
+    decidedBy: verified.pubkey,
+    npub: body.npub,
+  };
+
+  await env.APPROVALS.put(applicationDecisionKey(submissionId), JSON.stringify(decision));
+
+  // Now create the approval record
+  if (body.status === 'accepted' && npub) {
     const existing = await getApprovalRecord(env.APPROVALS, npub);
     const record: ApprovalRecord = {
       npub,
       name: sanitizeText(body.name, 120) || existing?.name || '',
-      email: normalizeEmail(body.email) || existing?.email || '',
+      email: safeEmail || existing?.email || '',
       tshirt_size: existing?.tshirt_size || '',
       dietary_restrictions: existing?.dietary_restrictions || '',
       mobility_concerns: existing?.mobility_concerns || '',
@@ -701,16 +723,6 @@ async function handleDecideApplication(
     };
     await env.APPROVALS.put(approvalKey(npub), JSON.stringify(record));
   }
-
-  const decision: ApplicationDecision = {
-    submissionId,
-    status: body.status,
-    decidedAt: now,
-    decidedBy: verified.pubkey,
-    npub: body.npub,
-  };
-
-  await env.APPROVALS.put(applicationDecisionKey(submissionId), JSON.stringify(decision));
 
   return jsonResponse({ ok: true, decision }, 200, headers);
 }

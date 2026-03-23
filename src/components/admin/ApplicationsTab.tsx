@@ -9,7 +9,11 @@ import { Mail } from 'lucide-react';
 type StatusFilter = 'all' | 'pending' | 'accepted' | 'rejected';
 
 function statusOf(sub: FormspreeSubmission): 'pending' | 'accepted' | 'rejected' {
-  return sub._decision?.status ?? 'pending';
+  if (sub._decision?.status) return sub._decision.status;
+  // If the npub is already in the approved list (e.g. added directly),
+  // reflect that instead of showing a stale "pending" status.
+  if (sub._is_approved) return 'accepted';
+  return 'pending';
 }
 
 function StatusBadge({ status }: { status: 'pending' | 'accepted' | 'rejected' }) {
@@ -43,7 +47,7 @@ interface Props {
 
 export function ApplicationsTab({ isForbidden }: Props) {
   const { applicationsQuery, decideMutation, page, setPage } = useAdminApplications();
-  const [filter, setFilter] = useState<StatusFilter>('all');
+  const [filter, setFilter] = useState<StatusFilter>('pending');
   const [selected, setSelected] = useState<FormspreeSubmission | null>(null);
   const [message, setMessage] = useState('');
   const [checked, setChecked] = useState<Set<string>>(new Set());
