@@ -59,12 +59,12 @@ export function useAdminApprovals() {
   });
 
   const addMutation = useMutation({
-    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns }: ApprovalUpsertInput) => {
+    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in }: ApprovalUpsertInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/approvals`;
       const response = await authFetch(user, url, 'POST', {
-        npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns,
+        npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in,
       });
       if (!response.ok) {
         throw await parseError(response);
@@ -77,12 +77,12 @@ export function useAdminApprovals() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns }: ApprovalUpsertInput) => {
+    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in }: ApprovalUpsertInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/approvals/${encodeURIComponent(npub)}`;
       const response = await authFetch(user, url, 'PUT', {
-        name, email, tshirt_size, dietary_restrictions, mobility_concerns,
+        name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in,
       });
       if (!response.ok) {
         throw await parseError(response);
