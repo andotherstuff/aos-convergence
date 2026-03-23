@@ -97,6 +97,7 @@ export function ApplicationsTab({ isForbidden }: Props) {
         npub: sub.nostr_npub || undefined,
         name: sub.full_name || undefined,
         email: sub.email || undefined,
+        hrf_opt_in: sub.hrf_opt_in === 'yes' ? 'yes' : '',
       });
       setSelected(null);
       setMessage(`Application ${status === 'rejected' ? 'declined' : status}.`);
@@ -127,6 +128,7 @@ export function ApplicationsTab({ isForbidden }: Props) {
             npub: sub.nostr_npub || undefined,
             name: sub.full_name || undefined,
             email: sub.email || undefined,
+            hrf_opt_in: sub.hrf_opt_in === 'yes' ? 'yes' : '',
           }),
         ),
       );

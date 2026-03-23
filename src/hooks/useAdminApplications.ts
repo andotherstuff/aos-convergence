@@ -48,6 +48,7 @@ export interface DecideInput {
   npub?: string;
   name?: string;
   email?: string;
+  hrf_opt_in?: string;
 }
 
 export function useAdminApplications() {
@@ -74,11 +75,11 @@ export function useAdminApplications() {
   });
 
   const decideMutation = useMutation({
-    mutationFn: async ({ submissionId, status, npub, name, email }: DecideInput) => {
+    mutationFn: async ({ submissionId, status, npub, name, email, hrf_opt_in }: DecideInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/applications/${encodeURIComponent(submissionId)}/decide`;
-      const response = await authFetch(user, url, 'POST', { status, npub, name, email });
+      const response = await authFetch(user, url, 'POST', { status, npub, name, email, hrf_opt_in });
       if (!response.ok) {
         throw await parseError(response);
       }

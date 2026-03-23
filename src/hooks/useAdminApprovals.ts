@@ -12,6 +12,7 @@ export interface ApprovalRecord {
   mobility_concerns: string;
   signal: string;
   contact_email_only: string;
+  hrf_opt_in: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -27,6 +28,7 @@ export interface ApprovalUpsertInput {
   mobility_concerns?: string;
   signal?: string;
   contact_email_only?: string;
+  hrf_opt_in?: string;
 }
 
 interface ApprovalsResponse {

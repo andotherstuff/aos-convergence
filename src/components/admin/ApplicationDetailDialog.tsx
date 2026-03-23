@@ -4,7 +4,9 @@ import {
 import { FormspreeSubmission } from '@/hooks/useAdminApplications';
 
 function statusOf(sub: FormspreeSubmission): 'pending' | 'accepted' | 'rejected' {
-  return sub._decision?.status ?? 'pending';
+  if (sub._decision?.status === 'rejected') return 'rejected';
+  if (sub._is_approved) return 'accepted';
+  return 'pending';
 }
 
 function StatusBadge({ status }: { status: 'pending' | 'accepted' | 'rejected' }) {
@@ -53,9 +55,14 @@ export function ApplicationDetailDialog({ submission, onOpenChange, footer }: Pr
             <div className="grid grid-cols-2 gap-4">
               <ApplicationDetail label="Email" value={submission.email} />
               <ApplicationDetail label="Location" value={submission.location} />
-              <ApplicationDetail label="Nostr npub" value={submission.nostr_npub} />
               <ApplicationDetail label="HRF Opt-in" value={submission.hrf_opt_in === 'yes' ? 'Yes' : 'No'} />
             </div>
+            {submission.nostr_npub && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nostr npub</p>
+                <p className="text-sm text-foreground break-all font-mono">{submission.nostr_npub}</p>
+              </div>
+            )}
 
             <hr className="border-border" />
 

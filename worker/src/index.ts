@@ -17,6 +17,7 @@ interface ApprovalRecord {
   mobility_concerns: string;
   signal: string;
   contact_email_only: string;
+  hrf_opt_in: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -32,6 +33,7 @@ interface ApprovalInput {
   mobility_concerns?: string;
   signal?: string;
   contact_email_only?: string;
+  hrf_opt_in?: string;
 }
 
 interface ApplicationDecision {
@@ -187,6 +189,7 @@ function normalizeApprovalInput(body: ApprovalInput): {
     mobility_concerns: sanitizeText(body.mobility_concerns, 500),
     signal: sanitizeText(body.signal, 3),
     contact_email_only: sanitizeText(body.contact_email_only, 3),
+    hrf_opt_in: sanitizeText(body.hrf_opt_in, 3),
   };
 }
 
@@ -205,6 +208,7 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       mobility_concerns: parsed.mobility_concerns ?? '',
       signal: parsed.signal ?? '',
       contact_email_only: parsed.contact_email_only ?? '',
+      hrf_opt_in: parsed.hrf_opt_in ?? '',
       addedAt: parsed.addedAt ?? '',
       addedBy: parsed.addedBy ?? '',
       updatedAt: parsed.updatedAt ?? parsed.addedAt ?? '',
@@ -220,6 +224,7 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       mobility_concerns: '',
       signal: '',
       contact_email_only: '',
+      hrf_opt_in: '',
       addedAt: '',
       addedBy: '',
       updatedAt: '',
@@ -480,6 +485,7 @@ async function handleAddApprovalRequest(
     mobility_concerns: input.mobility_concerns || existing?.mobility_concerns || '',
     signal: input.signal || existing?.signal || '',
     contact_email_only: input.contact_email_only || existing?.contact_email_only || '',
+    hrf_opt_in: input.hrf_opt_in || existing?.hrf_opt_in || '',
     addedAt: existing?.addedAt || now,
     addedBy: existing?.addedBy || verified.pubkey,
     updatedAt: now,
@@ -548,6 +554,7 @@ async function handleUpdateApprovalRequest(
     mobility_concerns: input.mobility_concerns,
     signal: input.signal,
     contact_email_only: input.contact_email_only,
+    hrf_opt_in: input.hrf_opt_in,
     updatedAt: now,
     updatedBy: verified.pubkey,
   };
@@ -678,7 +685,7 @@ async function handleDecideApplication(
   }
   const submissionId = decodeURIComponent(match[1]);
 
-  let body: { status?: string; npub?: string; name?: string; email?: string };
+  let body: { status?: string; npub?: string; name?: string; email?: string; hrf_opt_in?: string };
   try {
     body = await request.json();
   } catch {
@@ -733,6 +740,7 @@ async function handleDecideApplication(
       mobility_concerns: existing?.mobility_concerns || '',
       signal: existing?.signal || '',
       contact_email_only: existing?.contact_email_only || '',
+      hrf_opt_in: sanitizeText(body.hrf_opt_in, 3) || existing?.hrf_opt_in || '',
       addedAt: existing?.addedAt || now,
       addedBy: existing?.addedBy || verified.pubkey,
       updatedAt: now,
