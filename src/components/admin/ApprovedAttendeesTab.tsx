@@ -274,7 +274,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
 
       <div className="rounded-2xl border border-border overflow-x-auto">
         <div className="min-w-[1220px]">
-          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_72px] gap-3 px-4 py-3 bg-card border-b border-border">
+          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_82px] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
@@ -284,8 +284,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Signal</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Email only</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">HRF</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">App</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Remove</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">App</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Remove</p>
           </div>
 
           {loading ? (
@@ -302,7 +302,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                 return (
                   <div
                     key={item.npub}
-                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_72px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
+                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_82px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
                   >
                     <code className="text-xs break-all">{item.npub}</code>
                     <Input
@@ -381,7 +381,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                         <SelectItem value="no">n</SelectItem>
                       </SelectContent>
                     </Select>
-                    <div>
+                    <div className="text-center">
                       {submissionsByNpub.has(item.npub) ? (
                         <Button
                           variant="outline"
@@ -398,7 +398,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-lg"
+                      className="rounded-lg w-full"
                       onClick={() => void handleRemove(item.npub)}
                       disabled={isForbidden || busy}
                     >
