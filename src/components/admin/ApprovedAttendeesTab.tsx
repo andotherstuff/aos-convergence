@@ -202,8 +202,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1280px]">
-          <div className="grid grid-cols-[1.8fr_0.8fr_1fr_0.5fr_0.8fr_0.8fr_0.7fr_0.8fr] gap-3 px-4 py-3 bg-card border-b border-border">
+        <div className="min-w-[1400px]">
+          <div className="grid grid-cols-[1.8fr_0.8fr_1fr_0.5fr_0.8fr_0.8fr_0.7fr_auto_auto] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
@@ -211,6 +211,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Dietary</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Mobility</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Updated</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Application</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Actions</p>
           </div>
 
@@ -227,7 +228,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                 return (
                   <div
                     key={item.npub}
-                    className="grid grid-cols-[1.8fr_0.8fr_1fr_0.5fr_0.8fr_0.8fr_0.7fr_0.8fr] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
+                    className="grid grid-cols-[1.8fr_0.8fr_1fr_0.5fr_0.8fr_0.8fr_0.7fr_auto_auto] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
                   >
                     <code className="text-xs break-all">{item.npub}</code>
                     <Input
@@ -275,6 +276,20 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                       disabled={isForbidden || busy}
                     />
                     <p className="text-xs text-muted-foreground break-all">{item.updatedAt || item.addedAt || '-'}</p>
+                    <div>
+                      {submissionsByNpub.has(item.npub) ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg"
+                          onClick={() => setViewingApplication(submissionsByNpub.get(item.npub)!)}
+                        >
+                          View
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
@@ -284,16 +299,6 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                       >
                         Save
                       </Button>
-                      {submissionsByNpub.has(item.npub) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-lg"
-                          onClick={() => setViewingApplication(submissionsByNpub.get(item.npub)!)}
-                        >
-                          Application
-                        </Button>
-                      )}
                       <Button
                         variant="outline"
                         size="sm"
