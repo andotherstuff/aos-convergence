@@ -273,7 +273,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1220px]">
+        <div className="min-w-[1310px]">
           <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_82px] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
