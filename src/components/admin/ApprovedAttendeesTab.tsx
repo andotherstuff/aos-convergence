@@ -15,7 +15,6 @@ type EditState = Record<string, {
   mobility_concerns: string;
   signal: string;
   contact_email_only: string;
-  hrf_opt_in: string;
 }>;
 
 function escapeCsv(value: string): string {
@@ -91,7 +90,6 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         mobility_concerns: item.mobility_concerns ?? '',
         signal: item.signal ?? '',
         contact_email_only: item.contact_email_only ?? '',
-        hrf_opt_in: item.hrf_opt_in ?? '',
       };
     }
     setEdits(next);
@@ -141,7 +139,6 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         mobility_concerns: edit.mobility_concerns,
         signal: edit.signal,
         contact_email_only: edit.contact_email_only,
-        hrf_opt_in: edit.hrf_opt_in,
       });
       setMessage(`Saved updates for ${item.npub}.`);
     } catch (error) {
@@ -213,60 +210,63 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1540px]">
-          <div className="grid grid-cols-[280px_130px_170px_80px_130px_130px_60px_70px_50px_100px_80px_140px] gap-3 px-4 py-3 bg-card border-b border-border">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">T-shirt</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Dietary</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Mobility</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Signal</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email only</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">HRF</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Updated</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Application</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Actions</p>
-          </div>
-
-          {loading ? (
-            <div className="px-4 py-6 text-sm text-muted-foreground">Loading approvals...</div>
-          ) : !hasRows ? (
-            <div className="px-4 py-6 text-sm text-muted-foreground">No approved npubs yet.</div>
-          ) : (
-            <div>
-              {sortedList.map((item) => {
-                const edit = edits[item.npub] ?? {
-                  name: '', email: '', tshirt_size: '', dietary_restrictions: '', mobility_concerns: '',
-                  signal: '', contact_email_only: '', hrf_opt_in: '',
-                };
-                return (
-                  <div
-                    key={item.npub}
-                    className="grid grid-cols-[280px_130px_170px_80px_130px_130px_60px_70px_50px_100px_80px_140px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
-                  >
+        <table className="w-full text-left" style={{ minWidth: 1100 }}>
+          <thead>
+            <tr className="bg-card border-b border-border">
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">npub</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">Name</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">Email</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">Shirt</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">Dietary</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">Mobility</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap text-center">Signal</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap text-center">Email only</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap text-center">HRF</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">App</th>
+              <th className="px-3 py-3 text-xs uppercase tracking-[0.14em] text-muted-foreground font-normal whitespace-nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={11} className="px-3 py-6 text-sm text-muted-foreground">Loading approvals...</td></tr>
+            ) : !hasRows ? (
+              <tr><td colSpan={11} className="px-3 py-6 text-sm text-muted-foreground">No approved npubs yet.</td></tr>
+            ) : sortedList.map((item) => {
+              const edit = edits[item.npub] ?? {
+                name: '', email: '', tshirt_size: '', dietary_restrictions: '', mobility_concerns: '',
+                signal: '', contact_email_only: '',
+              };
+              return (
+                <tr key={item.npub} className="border-b border-border last:border-b-0 align-middle">
+                  <td className="px-3 py-2.5 max-w-[180px]">
                     <code className="text-xs break-all">{item.npub}</code>
+                  </td>
+                  <td className="px-3 py-2.5">
                     <Input
                       value={edit.name}
                       onChange={(e) => updateEdit(item.npub, 'name', e.target.value)}
-                      placeholder="Name / nym"
-                      className="h-9 rounded-lg"
+                      placeholder="Name"
+                      className="h-8 rounded-lg min-w-[100px]"
                       disabled={isForbidden || busy}
                     />
+                  </td>
+                  <td className="px-3 py-2.5">
                     <Input
                       value={edit.email}
                       onChange={(e) => updateEdit(item.npub, 'email', e.target.value)}
-                      placeholder="email@example.com"
+                      placeholder="email"
                       type="email"
-                      className="h-9 rounded-lg"
+                      className="h-8 rounded-lg min-w-[130px]"
                       disabled={isForbidden || busy}
                     />
+                  </td>
+                  <td className="px-3 py-2.5">
                     <Select
                       value={edit.tshirt_size || '_none'}
                       onValueChange={(v) => updateEdit(item.npub, 'tshirt_size', v === '_none' ? '' : v)}
                       disabled={isForbidden || busy}
                     >
-                      <SelectTrigger className="h-9 rounded-lg">
+                      <SelectTrigger className="h-8 rounded-lg min-w-[60px]">
                         <SelectValue placeholder="-" />
                       </SelectTrigger>
                       <SelectContent>
@@ -276,66 +276,65 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                         ))}
                       </SelectContent>
                     </Select>
+                  </td>
+                  <td className="px-3 py-2.5">
                     <Input
                       value={edit.dietary_restrictions}
                       onChange={(e) => updateEdit(item.npub, 'dietary_restrictions', e.target.value)}
                       placeholder="None"
-                      className="h-9 rounded-lg"
+                      className="h-8 rounded-lg min-w-[90px]"
                       disabled={isForbidden || busy}
                     />
+                  </td>
+                  <td className="px-3 py-2.5">
                     <Input
                       value={edit.mobility_concerns}
                       onChange={(e) => updateEdit(item.npub, 'mobility_concerns', e.target.value)}
                       placeholder="None"
-                      className="h-9 rounded-lg"
+                      className="h-8 rounded-lg min-w-[90px]"
                       disabled={isForbidden || busy}
                     />
-                    <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={edit.signal === 'yes'}
-                        onChange={(e) => updateEdit(item.npub, 'signal', e.target.checked ? 'yes' : '')}
-                        className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
-                        disabled={isForbidden || busy}
-                      />
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={edit.contact_email_only === 'yes'}
-                        onChange={(e) => updateEdit(item.npub, 'contact_email_only', e.target.checked ? 'yes' : '')}
-                        className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
-                        disabled={isForbidden || busy}
-                      />
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <input
-                        type="checkbox"
-                        checked={edit.hrf_opt_in === 'yes'}
-                        onChange={(e) => updateEdit(item.npub, 'hrf_opt_in', e.target.checked ? 'yes' : '')}
-                        className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
-                        disabled={isForbidden || busy}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground break-all">{item.updatedAt || item.addedAt || '-'}</p>
-                    <div>
-                      {submissionsByNpub.has(item.npub) ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-lg"
-                          onClick={() => setViewingApplication(submissionsByNpub.get(item.npub)!)}
-                        >
-                          View
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <input
+                      type="checkbox"
+                      checked={edit.signal === 'yes'}
+                      onChange={(e) => updateEdit(item.npub, 'signal', e.target.checked ? 'yes' : '')}
+                      className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
+                      disabled={isForbidden || busy}
+                    />
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <input
+                      type="checkbox"
+                      checked={edit.contact_email_only === 'yes'}
+                      onChange={(e) => updateEdit(item.npub, 'contact_email_only', e.target.checked ? 'yes' : '')}
+                      className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
+                      disabled={isForbidden || busy}
+                    />
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className="text-xs font-medium">{item.hrf_opt_in === 'yes' ? 'y' : 'n'}</span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    {submissionsByNpub.has(item.npub) ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg h-8 text-xs"
+                        onClick={() => setViewingApplication(submissionsByNpub.get(item.npub)!)}
+                      >
+                        View
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-1.5">
                       <Button
                         size="sm"
-                        className="rounded-lg"
+                        className="rounded-lg h-8 text-xs"
                         onClick={() => void handleSave(item)}
                         disabled={isForbidden || busy}
                       >
@@ -344,19 +343,19 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-lg"
+                        className="rounded-lg h-8 text-xs"
                         onClick={() => void handleRemove(item.npub)}
                         disabled={isForbidden || busy}
                       >
                         Remove
                       </Button>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} isForbidden={isForbidden} />
