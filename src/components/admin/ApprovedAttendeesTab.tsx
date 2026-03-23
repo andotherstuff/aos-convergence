@@ -83,6 +83,12 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
   useEffect(() => {
     const next: EditState = {};
     for (const item of list) {
+      // If hrf_opt_in is not set on the approval record, fill it from the application
+      let hrf = item.hrf_opt_in ?? '';
+      if (!hrf) {
+        const sub = submissionsByNpub.get(item.npub);
+        if (sub) hrf = sub.hrf_opt_in === 'yes' ? 'yes' : 'no';
+      }
       next[item.npub] = {
         name: item.name ?? '',
         email: item.email ?? '',
@@ -91,11 +97,11 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         mobility_concerns: item.mobility_concerns ?? '',
         signal: item.signal ?? '',
         contact_email_only: item.contact_email_only ?? '',
-        hrf_opt_in: item.hrf_opt_in ?? '',
+        hrf_opt_in: hrf,
       };
     }
     setEdits(next);
-  }, [list]);
+  }, [list, submissionsByNpub]);
 
   const busy = addMutation.isPending || updateMutation.isPending || removeMutation.isPending;
   const hasRows = list.length > 0;
