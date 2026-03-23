@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from './useCurrentUser';
 import { API_BASE } from '@/lib/apiBase';
-import { createNip98Token } from '@/lib/nip98Auth';
+import { authFetch, parseError } from '@/lib/adminApi';
 
 export interface ApprovalRecord {
   npub: string;
   name: string;
   email: string;
+  tshirt_size: string;
+  dietary_restrictions: string;
+  mobility_concerns: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -17,35 +20,14 @@ export interface ApprovalUpsertInput {
   npub: string;
   name?: string;
   email?: string;
+  tshirt_size?: string;
+  dietary_restrictions?: string;
+  mobility_concerns?: string;
 }
 
 interface ApprovalsResponse {
   items: ApprovalRecord[];
   count: number;
-}
-
-async function authFetch(
-  user: NonNullable<ReturnType<typeof useCurrentUser>['user']>,
-  url: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-  body?: Record<string, unknown>,
-): Promise<Response> {
-  const token = await createNip98Token(user, url, method);
-
-  return fetch(url, {
-    method,
-    headers: {
-      Authorization: `Nostr ${token}`,
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-}
-
-async function parseError(response: Response): Promise<Error> {
-  const body = await response.json().catch(() => ({}));
-  const message = (body as { error?: string }).error || 'Request failed';
-  return new Error(message);
 }
 
 export function useAdminApprovals() {
@@ -71,11 +53,13 @@ export function useAdminApprovals() {
   });
 
   const addMutation = useMutation({
-    mutationFn: async ({ npub, name, email }: ApprovalUpsertInput) => {
+    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns }: ApprovalUpsertInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/approvals`;
-      const response = await authFetch(user, url, 'POST', { npub, name, email });
+      const response = await authFetch(user, url, 'POST', {
+        npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns,
+      });
       if (!response.ok) {
         throw await parseError(response);
       }
@@ -87,11 +71,13 @@ export function useAdminApprovals() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ npub, name, email }: ApprovalUpsertInput) => {
+    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns }: ApprovalUpsertInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/approvals/${encodeURIComponent(npub)}`;
-      const response = await authFetch(user, url, 'PUT', { name, email });
+      const response = await authFetch(user, url, 'PUT', {
+        name, email, tshirt_size, dietary_restrictions, mobility_concerns,
+      });
       if (!response.ok) {
         throw await parseError(response);
       }

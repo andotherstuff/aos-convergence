@@ -5,12 +5,16 @@ interface Env {
   APPROVED_NPUBS?: string; // Legacy fallback
   ADMIN_PUBKEYS?: string; // Comma-separated admin identities (npub or hex)
   SIGNAL_GROUP_LINK: string;
+  FORMSPREE_API_KEY?: string; // API key for fetching form submissions
 }
 
 interface ApprovalRecord {
   npub: string;
   name: string;
   email: string;
+  tshirt_size: string;
+  dietary_restrictions: string;
+  mobility_concerns: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -21,6 +25,17 @@ interface ApprovalInput {
   npub?: string;
   name?: string;
   email?: string;
+  tshirt_size?: string;
+  dietary_restrictions?: string;
+  mobility_concerns?: string;
+}
+
+interface ApplicationDecision {
+  submissionId: string;
+  status: 'accepted' | 'rejected';
+  decidedAt: string;
+  decidedBy: string;
+  npub?: string;
 }
 
 interface NostrAuthEvent {
@@ -156,10 +171,15 @@ function normalizeEmail(value: string | undefined): string {
   return email;
 }
 
-function normalizeApprovalInput(body: ApprovalInput): { name: string; email: string } {
+function normalizeApprovalInput(body: ApprovalInput): {
+  name: string; email: string; tshirt_size: string; dietary_restrictions: string; mobility_concerns: string;
+} {
   return {
     name: sanitizeText(body.name, 120),
     email: normalizeEmail(body.email),
+    tshirt_size: sanitizeText(body.tshirt_size, 10),
+    dietary_restrictions: sanitizeText(body.dietary_restrictions, 500),
+    mobility_concerns: sanitizeText(body.mobility_concerns, 500),
   };
 }
 
@@ -173,6 +193,9 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       npub,
       name: parsed.name ?? '',
       email: parsed.email ?? '',
+      tshirt_size: parsed.tshirt_size ?? '',
+      dietary_restrictions: parsed.dietary_restrictions ?? '',
+      mobility_concerns: parsed.mobility_concerns ?? '',
       addedAt: parsed.addedAt ?? '',
       addedBy: parsed.addedBy ?? '',
       updatedAt: parsed.updatedAt ?? parsed.addedAt ?? '',
@@ -183,6 +206,9 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       npub,
       name: '',
       email: '',
+      tshirt_size: '',
+      dietary_restrictions: '',
+      mobility_concerns: '',
       addedAt: '',
       addedBy: '',
       updatedAt: '',
@@ -343,6 +369,14 @@ export default {
       return handleDeleteApprovalRequest(request, env, headers, url);
     }
 
+    if (url.pathname === '/api/admin/applications' && request.method === 'GET') {
+      return handleListApplications(request, env, headers, url);
+    }
+
+    if (/^\/api\/admin\/applications\/[^/]+\/decide$/.test(url.pathname) && request.method === 'POST') {
+      return handleDecideApplication(request, env, headers, url);
+    }
+
     return jsonResponse({ error: 'Not found' }, 404, headers);
   },
 } satisfies ExportedHandler<Env>;
@@ -417,7 +451,7 @@ async function handleAddApprovalRequest(
     return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid npub' }, 400, headers);
   }
 
-  let input: { name: string; email: string };
+  let input: ReturnType<typeof normalizeApprovalInput>;
   try {
     input = normalizeApprovalInput(body);
   } catch (error) {
@@ -430,6 +464,9 @@ async function handleAddApprovalRequest(
     npub,
     name: input.name || existing?.name || '',
     email: input.email || existing?.email || '',
+    tshirt_size: input.tshirt_size || existing?.tshirt_size || '',
+    dietary_restrictions: input.dietary_restrictions || existing?.dietary_restrictions || '',
+    mobility_concerns: input.mobility_concerns || existing?.mobility_concerns || '',
     addedAt: existing?.addedAt || now,
     addedBy: existing?.addedBy || verified.pubkey,
     updatedAt: now,
@@ -476,7 +513,7 @@ async function handleUpdateApprovalRequest(
     return jsonResponse({ error: 'Invalid JSON body' }, 400, headers);
   }
 
-  let input: { name: string; email: string };
+  let input: ReturnType<typeof normalizeApprovalInput>;
   try {
     input = normalizeApprovalInput(body);
   } catch (error) {
@@ -493,6 +530,9 @@ async function handleUpdateApprovalRequest(
     ...existing,
     name: input.name,
     email: input.email,
+    tshirt_size: input.tshirt_size,
+    dietary_restrictions: input.dietary_restrictions,
+    mobility_concerns: input.mobility_concerns,
     updatedAt: now,
     updatedBy: verified.pubkey,
   };
@@ -531,4 +571,141 @@ async function handleDeleteApprovalRequest(
 
   await env.APPROVALS.delete(approvalKey(npub));
   return jsonResponse({ ok: true, npub }, 200, headers);
+}
+
+function applicationDecisionKey(submissionId: string): string {
+  return `application:${submissionId}`;
+}
+
+async function handleListApplications(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+  url: URL,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
+
+  const adminError = ensureAdmin(verified, env, headers);
+  if (adminError) return adminError;
+
+  if (!env.FORMSPREE_API_KEY) {
+    return jsonResponse({ error: 'FORMSPREE_API_KEY is not configured' }, 500, headers);
+  }
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  const page = url.searchParams.get('page') || '1';
+  const formspreeUrl = `https://formspree.io/api/0/forms/mnjgpgjb/submissions?page=${encodeURIComponent(page)}`;
+
+  let formspreeData: { submissions: Record<string, string>[]; pages: number };
+  try {
+    const resp = await fetch(formspreeUrl, {
+      headers: { Authorization: `Bearer ${env.FORMSPREE_API_KEY}` },
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      return jsonResponse({ error: `Formspree API error: ${resp.status} ${text}` }, 502, headers);
+    }
+    formspreeData = await resp.json();
+  } catch (error) {
+    return jsonResponse({ error: 'Failed to fetch from Formspree' }, 502, headers);
+  }
+
+  // Enrich each submission with decision status and approval status
+  const enriched = await Promise.all(
+    formspreeData.submissions.map(async (sub) => {
+      const id = sub._id as string;
+      const npub = sub.nostr_npub as string | undefined;
+
+      const [decisionRaw, isApproved] = await Promise.all([
+        env.APPROVALS!.get(applicationDecisionKey(id)),
+        npub ? isApprovedNpub(npub, env) : Promise.resolve(false),
+      ]);
+
+      let decision: ApplicationDecision | null = null;
+      if (decisionRaw) {
+        try { decision = JSON.parse(decisionRaw); } catch { /* ignore */ }
+      }
+
+      return { ...sub, _decision: decision, _is_approved: isApproved };
+    }),
+  );
+
+  return jsonResponse({ submissions: enriched, pages: formspreeData.pages }, 200, headers);
+}
+
+async function handleDecideApplication(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+  url: URL,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'POST');
+  if (verified instanceof Response) return verified;
+
+  const adminError = ensureAdmin(verified, env, headers);
+  if (adminError) return adminError;
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  // Extract submission ID from /api/admin/applications/{id}/decide
+  const match = url.pathname.match(/^\/api\/admin\/applications\/([^/]+)\/decide$/);
+  if (!match?.[1]) {
+    return jsonResponse({ error: 'Submission ID is required' }, 400, headers);
+  }
+  const submissionId = decodeURIComponent(match[1]);
+
+  let body: { status?: string; npub?: string; name?: string; email?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, headers);
+  }
+
+  if (body.status !== 'accepted' && body.status !== 'rejected') {
+    return jsonResponse({ error: 'status must be "accepted" or "rejected"' }, 400, headers);
+  }
+
+  const now = new Date().toISOString();
+  const decision: ApplicationDecision = {
+    submissionId,
+    status: body.status,
+    decidedAt: now,
+    decidedBy: verified.pubkey,
+    npub: body.npub,
+  };
+
+  await env.APPROVALS.put(applicationDecisionKey(submissionId), JSON.stringify(decision));
+
+  // If accepting and npub is provided, also create the approval record
+  if (body.status === 'accepted' && body.npub) {
+    let npub: string;
+    try {
+      npub = canonicalizeNpub(body.npub);
+    } catch (error) {
+      return jsonResponse({ error: error instanceof Error ? error.message : 'Invalid npub' }, 400, headers);
+    }
+
+    const existing = await getApprovalRecord(env.APPROVALS, npub);
+    const record: ApprovalRecord = {
+      npub,
+      name: sanitizeText(body.name, 120) || existing?.name || '',
+      email: normalizeEmail(body.email) || existing?.email || '',
+      tshirt_size: existing?.tshirt_size || '',
+      dietary_restrictions: existing?.dietary_restrictions || '',
+      mobility_concerns: existing?.mobility_concerns || '',
+      addedAt: existing?.addedAt || now,
+      addedBy: existing?.addedBy || verified.pubkey,
+      updatedAt: now,
+      updatedBy: verified.pubkey,
+    };
+    await env.APPROVALS.put(approvalKey(npub), JSON.stringify(record));
+  }
+
+  return jsonResponse({ ok: true, decision }, 200, headers);
 }

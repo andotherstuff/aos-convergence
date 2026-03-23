@@ -11,8 +11,10 @@ id = "31335330ba504ed98ad3748598da9454"
 # - ADMIN_PUBKEYS: comma-separated admin pubkeys allowed to manage approvals (npub or hex)
 # - SIGNAL_GROUP_LINK: event coordination link returned to approved attendees
 # - APPROVED_NPUBS: optional legacy fallback list (comma-separated npubs)
+# - FORMSPREE_API_KEY: API key for fetching form submissions from Formspree
 #
 # Set them with:
 #   wrangler secret put ADMIN_PUBKEYS
 #   wrangler secret put SIGNAL_GROUP_LINK
 #   wrangler secret put APPROVED_NPUBS
+#   wrangler secret put FORMSPREE_API_KEY
