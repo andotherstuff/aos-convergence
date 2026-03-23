@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useLoginActions } from '@/hooks/useLoginActions';
@@ -12,6 +13,12 @@ export function SiteHeader() {
   const isAdmin = location.pathname === '/admin';
   const { data: eventData } = useEventDetails({ enabled: !isAdmin });
   const isApproved = !!eventData;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-[rgba(222,219,213,0.9)]" style={{ backdropFilter: 'blur(14px)', background: 'rgba(251, 250, 248, 0.92)' }}>
@@ -34,6 +41,7 @@ export function SiteHeader() {
               </span>
             </div>
           </Link>
+          {/* Desktop nav */}
           <div className="hidden min-[721px]:flex items-center gap-[1.4rem] text-[0.9rem] text-[#716f6a]">
             <NavLink to="/" active={isHome}>Home</NavLink>
             <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
@@ -51,8 +59,50 @@ export function SiteHeader() {
               </Button>
             )}
           </div>
+          {/* Mobile hamburger button */}
+          <button
+            className="min-[721px]:hidden flex items-center justify-center w-9 h-9 text-[#716f6a] hover:text-[#0f100f] transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
+          </button>
         </nav>
       </div>
+      {/* Mobile menu dropdown */}
+      {mobileMenuOpen && (
+        <div className="min-[721px]:hidden border-t border-[rgba(222,219,213,0.9)]" style={{ background: 'rgba(251, 250, 248, 0.98)' }}>
+          <div className="w-full max-w-[1120px] mx-auto px-6 max-[720px]:px-4 py-4 flex flex-col gap-3 text-[0.9rem] text-[#716f6a]">
+            <MobileNavLink to="/" active={isHome}>Home</MobileNavLink>
+            <MobileNavLink to="/about" active={location.pathname === '/about'}>About</MobileNavLink>
+            <MobileNavLink to="/program" active={location.pathname === '/program'}>Program</MobileNavLink>
+            {!isApproved && <MobileNavLink to="/interest" active={location.pathname === '/interest'}>Apply</MobileNavLink>}
+            {currentUser && <MobileNavLink to="/admin" active={location.pathname === '/admin'}>Admin</MobileNavLink>}
+            {currentUser && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { logout(); setMobileMenuOpen(false); }}
+                className="text-[0.9rem] text-[#716f6a] hover:text-[#0f100f] p-0 h-auto font-normal w-fit"
+              >
+                Log out
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -69,6 +119,18 @@ function NavLink({ to, children, active }: { to: string; children: React.ReactNo
         className="absolute left-0 -bottom-[0.15rem] h-[1.5px] bg-[#0f100f] transition-[width] duration-200 ease-out group-hover:w-full"
         style={{ width: active ? '100%' : '0' }}
       />
+    </Link>
+  );
+}
+
+function MobileNavLink({ to, children, active }: { to: string; children: React.ReactNode; active?: boolean }) {
+  return (
+    <Link
+      to={to}
+      className="py-1 transition-colors no-underline"
+      style={{ color: active ? '#0f100f' : '#716f6a' }}
+    >
+      {children}
     </Link>
   );
 }

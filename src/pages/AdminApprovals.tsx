@@ -22,7 +22,7 @@ const AdminApprovals = () => {
   if (!user) {
     return (
       <SiteLayout>
-        <section className="max-w-[720px] mx-auto px-6 py-20">
+        <section className="max-w-[720px] mx-auto px-6 max-[720px]:px-4 py-20 max-[720px]:py-12">
           <h1 className="text-2xl font-semibold tracking-[-0.02em] text-foreground mb-3">Admin</h1>
           <p className="text-sm text-muted-foreground mb-6">Log in with an admin Nostr key to manage applications and attendees.</p>
           <div className="flex flex-wrap gap-3">
@@ -38,7 +38,7 @@ const AdminApprovals = () => {
 
   return (
     <SiteLayout>
-      <section className="max-w-[1100px] mx-auto px-6 py-16">
+      <section className="max-w-[1100px] mx-auto px-6 max-[720px]:px-4 py-16 max-[720px]:py-10">
         <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/70 mb-2 block">
           AOS Convergence Admin
         </span>

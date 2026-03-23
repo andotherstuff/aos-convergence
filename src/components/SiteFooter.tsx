@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useEventDetails } from '@/hooks/useEventDetails';
 
 export function SiteFooter() {
   const location = useLocation();
+  const { currentUser } = useLoggedInAccounts();
   const isAdmin = location.pathname === '/admin';
   const { data: eventData } = useEventDetails({ enabled: !isAdmin });
   const isApproved = !!eventData;
@@ -25,7 +27,10 @@ export function SiteFooter() {
           </div>
           <div className="flex flex-wrap gap-[0.85rem]">
             <Link to="/" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Home</Link>
+            <Link to="/about" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">About</Link>
+            <Link to="/program" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Program</Link>
             {!isApproved && <Link to="/interest" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Apply to Attend</Link>}
+            {currentUser && <Link to="/admin" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Admin</Link>}
             <a href="https://andotherstuff.org" target="_blank" rel="noopener noreferrer" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">
               andotherstuff.org
             </a>

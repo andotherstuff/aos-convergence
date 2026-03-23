@@ -148,11 +148,11 @@ export function ApplicationsTab({ isForbidden }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           {loading ? 'Loading...' : `${submissions.length} submissions on page ${page}`}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {checkedPending.length > 0 && (
             <Button
               size="sm"
