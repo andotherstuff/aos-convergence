@@ -14,6 +14,7 @@ export interface ApplicationDecision {
 
 export interface FormspreeSubmission {
   _id: string;
+  _submission_id: string; // Reliable ID set by our worker
   _date: string;
   full_name: string;
   email: string;

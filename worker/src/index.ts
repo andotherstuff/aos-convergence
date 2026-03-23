@@ -614,10 +614,13 @@ async function handleListApplications(
     return jsonResponse({ error: 'Failed to fetch from Formspree' }, 502, headers);
   }
 
+  const submissions = formspreeData.submissions ?? [];
+
   // Enrich each submission with decision status and approval status
   const enriched = await Promise.all(
-    formspreeData.submissions.map(async (sub) => {
-      const id = sub._id as string;
+    submissions.map(async (sub, index) => {
+      // Formspree may use _id or id — fall back to index-based key
+      const id = (sub._id ?? sub.id ?? `unknown-${index}`) as string;
       const npub = sub.nostr_npub as string | undefined;
 
       const [decisionRaw, isApproved] = await Promise.all([
@@ -630,11 +633,11 @@ async function handleListApplications(
         try { decision = JSON.parse(decisionRaw); } catch { /* ignore */ }
       }
 
-      return { ...sub, _decision: decision, _is_approved: isApproved };
+      return { ...sub, _submission_id: id, _decision: decision, _is_approved: isApproved };
     }),
   );
 
-  return jsonResponse({ submissions: enriched, pages: formspreeData.pages }, 200, headers);
+  return jsonResponse({ submissions: enriched, pages: formspreeData.pages ?? 1 }, 200, headers);
 }
 
 async function handleDecideApplication(
@@ -672,17 +675,9 @@ async function handleDecideApplication(
   }
 
   const now = new Date().toISOString();
-  const decision: ApplicationDecision = {
-    submissionId,
-    status: body.status,
-    decidedAt: now,
-    decidedBy: verified.pubkey,
-    npub: body.npub,
-  };
 
-  await env.APPROVALS.put(applicationDecisionKey(submissionId), JSON.stringify(decision));
-
-  // If accepting and npub is provided, also create the approval record
+  // If accepting and npub is provided, validate and create the approval record first
+  // so we don't store a decision if the npub is invalid
   if (body.status === 'accepted' && body.npub) {
     let npub: string;
     try {
@@ -706,6 +701,16 @@ async function handleDecideApplication(
     };
     await env.APPROVALS.put(approvalKey(npub), JSON.stringify(record));
   }
+
+  const decision: ApplicationDecision = {
+    submissionId,
+    status: body.status,
+    decidedAt: now,
+    decidedBy: verified.pubkey,
+    npub: body.npub,
+  };
+
+  await env.APPROVALS.put(applicationDecisionKey(submissionId), JSON.stringify(decision));
 
   return jsonResponse({ ok: true, decision }, 200, headers);
 }

@@ -69,12 +69,13 @@ export function ApplicationsTab({ isForbidden }: Props) {
     setMessage('');
     try {
       await decideMutation.mutateAsync({
-        submissionId: sub._id,
+        submissionId: sub._submission_id,
         status,
         npub: sub.nostr_npub || undefined,
         name: sub.full_name || undefined,
         email: sub.email || undefined,
       });
+      setSelected(null);
       setMessage(`Application ${status}.`);
     } catch (error) {
       setMessage((error as Error).message || `Failed to ${status} application.`);
@@ -112,7 +113,7 @@ export function ApplicationsTab({ isForbidden }: Props) {
             const status = statusOf(sub);
             return (
               <div
-                key={sub._id}
+                key={sub._submission_id}
                 className="rounded-xl border border-border p-4 flex items-center justify-between gap-4"
               >
                 <div className="min-w-0 flex-1">
