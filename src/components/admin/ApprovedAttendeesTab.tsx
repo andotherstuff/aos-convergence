@@ -133,25 +133,57 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
     }
   };
 
-  const handleSave = async (item: ApprovalRecord) => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveAll = async () => {
     setMessage('');
-    const edit = edits[item.npub];
-    if (!edit) return;
-    try {
-      await updateMutation.mutateAsync({
-        npub: item.npub,
-        name: edit.name,
-        email: edit.email,
-        tshirt_size: edit.tshirt_size,
-        dietary_restrictions: edit.dietary_restrictions,
-        mobility_concerns: edit.mobility_concerns,
-        signal: edit.signal,
-        contact_email_only: edit.contact_email_only,
-        hrf_opt_in: edit.hrf_opt_in,
-      });
-      setMessage(`Saved updates for ${item.npub}.`);
-    } catch (error) {
-      setMessage((error as Error).message || 'Failed to save attendee details.');
+    setSaving(true);
+    let saved = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const item of sortedList) {
+      const edit = edits[item.npub];
+      if (!edit) continue;
+
+      // Skip rows with no changes
+      if (
+        edit.name === (item.name ?? '') &&
+        edit.email === (item.email ?? '') &&
+        edit.tshirt_size === (item.tshirt_size ?? '') &&
+        edit.dietary_restrictions === (item.dietary_restrictions ?? '') &&
+        edit.mobility_concerns === (item.mobility_concerns ?? '') &&
+        edit.signal === (item.signal ?? '') &&
+        edit.contact_email_only === (item.contact_email_only ?? '') &&
+        edit.hrf_opt_in === (item.hrf_opt_in ?? '')
+      ) continue;
+
+      try {
+        await updateMutation.mutateAsync({
+          npub: item.npub,
+          name: edit.name,
+          email: edit.email,
+          tshirt_size: edit.tshirt_size,
+          dietary_restrictions: edit.dietary_restrictions,
+          mobility_concerns: edit.mobility_concerns,
+          signal: edit.signal,
+          contact_email_only: edit.contact_email_only,
+          hrf_opt_in: edit.hrf_opt_in,
+        });
+        saved++;
+      } catch (error) {
+        failed++;
+        errors.push(`${item.npub.slice(0, 20)}...: ${(error as Error).message || 'Failed'}`);
+      }
+    }
+
+    setSaving(false);
+    if (saved === 0 && failed === 0) {
+      setMessage('No changes to save.');
+    } else if (failed === 0) {
+      setMessage(`Saved ${saved} attendee${saved !== 1 ? 's' : ''}.`);
+    } else {
+      setMessage(`Saved ${saved}, failed ${failed}: ${errors.join('; ')}`);
     }
   };
 
@@ -192,9 +224,17 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         </Button>
       </form>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <p className="text-xs text-muted-foreground">Total attendees: {list.length}</p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            className="rounded-lg"
+            onClick={() => void handleSaveAll()}
+            disabled={isForbidden || saving || busy}
+          >
+            {saving ? 'Saving...' : 'Save All Changes'}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -219,8 +259,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1420px]">
-          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_130px] gap-3 px-4 py-3 bg-card border-b border-border">
+        <div className="min-w-[1220px]">
+          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_72px] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
@@ -231,7 +271,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Email only</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">HRF</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">App</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Actions</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground"></p>
           </div>
 
           {loading ? (
@@ -248,7 +288,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                 return (
                   <div
                     key={item.npub}
-                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_130px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
+                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_72px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
                   >
                     <code className="text-xs break-all">{item.npub}</code>
                     <Input
@@ -341,25 +381,15 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        className="rounded-lg"
-                        onClick={() => void handleSave(item)}
-                        disabled={isForbidden || busy}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-lg"
-                        onClick={() => void handleRemove(item.npub)}
-                        disabled={isForbidden || busy}
-                      >
-                        Remove
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-lg"
+                      onClick={() => void handleRemove(item.npub)}
+                      disabled={isForbidden || busy}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 );
               })}
@@ -367,6 +397,19 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
           )}
         </div>
       </div>
+
+      {hasRows && (
+        <div className="flex justify-end mt-4">
+          <Button
+            size="sm"
+            className="rounded-lg"
+            onClick={() => void handleSaveAll()}
+            disabled={isForbidden || saving || busy}
+          >
+            {saving ? 'Saving...' : 'Save All Changes'}
+          </Button>
+        </div>
+      )}
 
       <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} isForbidden={isForbidden} />
 
