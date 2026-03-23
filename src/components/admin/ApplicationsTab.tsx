@@ -20,7 +20,7 @@ function StatusBadge({ status }: { status: 'pending' | 'accepted' | 'rejected' }
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
-      {status}
+      {status === 'rejected' ? 'declined' : status}
     </span>
   );
 }
@@ -46,12 +46,43 @@ export function ApplicationsTab({ isForbidden }: Props) {
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<FormspreeSubmission | null>(null);
   const [message, setMessage] = useState('');
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   const submissions = applicationsQuery.data?.submissions ?? [];
   const totalPages = applicationsQuery.data?.pages ?? 1;
   const loading = applicationsQuery.isLoading;
 
   const filtered = filter === 'all' ? submissions : submissions.filter((s) => statusOf(s) === filter);
+  const pendingFiltered = filtered.filter((s) => statusOf(s) === 'pending' && s.nostr_npub);
+  const checkedPending = pendingFiltered.filter((s) => checked.has(s._submission_id));
+
+  const toggleCheck = (id: string) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (checkedPending.length === pendingFiltered.length) {
+      // Uncheck all pending
+      setChecked((prev) => {
+        const next = new Set(prev);
+        for (const s of pendingFiltered) next.delete(s._submission_id);
+        return next;
+      });
+    } else {
+      // Check all pending
+      setChecked((prev) => {
+        const next = new Set(prev);
+        for (const s of pendingFiltered) next.add(s._submission_id);
+        return next;
+      });
+    }
+  };
 
   const handleDecide = async (sub: FormspreeSubmission, status: 'accepted' | 'rejected') => {
     setMessage('');
@@ -64,9 +95,54 @@ export function ApplicationsTab({ isForbidden }: Props) {
         email: sub.email || undefined,
       });
       setSelected(null);
-      setMessage(`Application ${status}.`);
+      setMessage(`Application ${status === 'rejected' ? 'declined' : status}.`);
     } catch (error) {
       setMessage((error as Error).message || `Failed to ${status} application.`);
+    }
+  };
+
+  const handleBulkAccept = async () => {
+    const toAccept = submissions.filter(
+      (s) => checked.has(s._submission_id) && statusOf(s) === 'pending' && s.nostr_npub,
+    );
+    if (toAccept.length === 0) return;
+
+    setBulkProcessing(true);
+    setMessage('');
+    let accepted = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < toAccept.length; i += 5) {
+      const batch = toAccept.slice(i, i + 5);
+      const results = await Promise.allSettled(
+        batch.map((sub) =>
+          decideMutation.mutateAsync({
+            submissionId: sub._submission_id,
+            status: 'accepted',
+            npub: sub.nostr_npub || undefined,
+            name: sub.full_name || undefined,
+            email: sub.email || undefined,
+          }),
+        ),
+      );
+      for (let j = 0; j < results.length; j++) {
+        if (results[j].status === 'fulfilled') {
+          accepted++;
+        } else {
+          failed++;
+          const reason = (results[j] as PromiseRejectedResult).reason;
+          errors.push(`${batch[j].full_name || batch[j].nostr_npub}: ${reason instanceof Error ? reason.message : 'Unknown error'}`);
+        }
+      }
+    }
+
+    setChecked(new Set());
+    setBulkProcessing(false);
+    if (failed === 0) {
+      setMessage(`${accepted} application${accepted !== 1 ? 's' : ''} accepted.`);
+    } else {
+      setMessage(`${accepted} accepted, ${failed} failed: ${errors.join('; ')}`);
     }
   };
 
@@ -76,17 +152,29 @@ export function ApplicationsTab({ isForbidden }: Props) {
         <p className="text-xs text-muted-foreground">
           {loading ? 'Loading...' : `${submissions.length} submissions on page ${page}`}
         </p>
-        <Select value={filter} onValueChange={(v) => setFilter(v as StatusFilter)}>
-          <SelectTrigger className="w-[140px] h-9 rounded-lg">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="accepted">Accepted</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          {checkedPending.length > 0 && (
+            <Button
+              size="sm"
+              className="rounded-lg bg-green-600 hover:bg-green-700 text-white"
+              disabled={isForbidden || bulkProcessing}
+              onClick={() => void handleBulkAccept()}
+            >
+              {bulkProcessing ? 'Processing...' : `Accept ${checkedPending.length} selected`}
+            </Button>
+          )}
+          <Select value={filter} onValueChange={(v) => setFilter(v as StatusFilter)}>
+            <SelectTrigger className="w-[140px] h-9 rounded-lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="rejected">Declined</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {message && <p className="text-sm text-muted-foreground">{message}</p>}
@@ -97,13 +185,39 @@ export function ApplicationsTab({ isForbidden }: Props) {
         <div className="py-8 text-sm text-muted-foreground text-center">No applications found.</div>
       ) : (
         <div className="space-y-3">
+          {/* Select all toggle */}
+          {pendingFiltered.length > 0 && (
+            <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground pl-1">
+              <input
+                type="checkbox"
+                checked={checkedPending.length === pendingFiltered.length && pendingFiltered.length > 0}
+                onChange={toggleAll}
+                className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground"
+                disabled={bulkProcessing}
+              />
+              Select all pending ({pendingFiltered.length})
+            </label>
+          )}
+
           {filtered.map((sub) => {
             const status = statusOf(sub);
+            const canCheck = status === 'pending' && !!sub.nostr_npub;
             return (
               <div
                 key={sub._submission_id}
-                className="rounded-xl border border-border p-4 flex items-center justify-between gap-4"
+                className="rounded-xl border border-border p-4 flex items-center gap-4"
               >
+                {canCheck ? (
+                  <input
+                    type="checkbox"
+                    checked={checked.has(sub._submission_id)}
+                    onChange={() => toggleCheck(sub._submission_id)}
+                    className="w-4 h-4 rounded border-border text-foreground focus:ring-foreground shrink-0"
+                    disabled={bulkProcessing}
+                  />
+                ) : (
+                  <div className="w-4 shrink-0" />
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-sm font-medium text-foreground truncate">{sub.full_name || 'No name'}</p>
@@ -178,7 +292,7 @@ export function ApplicationsTab({ isForbidden }: Props) {
                   disabled={isForbidden || decideMutation.isPending}
                   onClick={() => void handleDecide(selected, 'rejected')}
                 >
-                  {decideMutation.isPending ? 'Processing...' : 'Reject'}
+                  {decideMutation.isPending ? 'Processing...' : 'Decline'}
                 </Button>
                 {!selected.nostr_npub && (
                   <p className="text-xs text-red-600">No npub provided — cannot accept without an npub.</p>
