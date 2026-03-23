@@ -202,8 +202,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1400px]">
-          <div className="grid grid-cols-[1.8fr_0.8fr_1fr_0.5fr_0.8fr_0.8fr_0.7fr_auto_auto] gap-3 px-4 py-3 bg-card border-b border-border">
+        <div className="min-w-[1340px]">
+          <div className="grid grid-cols-[280px_130px_170px_80px_130px_130px_100px_80px_140px] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
@@ -228,7 +228,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                 return (
                   <div
                     key={item.npub}
-                    className="grid grid-cols-[1.8fr_0.8fr_1fr_0.5fr_0.8fr_0.8fr_0.7fr_auto_auto] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
+                    className="grid grid-cols-[280px_130px_170px_80px_130px_130px_100px_80px_140px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
                   >
                     <code className="text-xs break-all">{item.npub}</code>
                     <Input
