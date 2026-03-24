@@ -18,6 +18,7 @@ interface ApprovalRecord {
   signal: string;
   contact_email_only: string;
   hrf_opt_in: string;
+  outreach_status: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -34,6 +35,7 @@ interface ApprovalInput {
   signal?: string;
   contact_email_only?: string;
   hrf_opt_in?: string;
+  outreach_status?: string;
 }
 
 interface ApplicationDecision {
@@ -190,6 +192,7 @@ function normalizeApprovalInput(body: ApprovalInput): {
     signal: sanitizeText(body.signal, 3),
     contact_email_only: sanitizeText(body.contact_email_only, 3),
     hrf_opt_in: sanitizeText(body.hrf_opt_in, 3),
+    outreach_status: sanitizeText(body.outreach_status, 20),
   };
 }
 
@@ -209,6 +212,7 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       signal: parsed.signal ?? '',
       contact_email_only: parsed.contact_email_only ?? '',
       hrf_opt_in: parsed.hrf_opt_in ?? '',
+      outreach_status: parsed.outreach_status || 'new',
       addedAt: parsed.addedAt ?? '',
       addedBy: parsed.addedBy ?? '',
       updatedAt: parsed.updatedAt ?? parsed.addedAt ?? '',
@@ -225,6 +229,7 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       signal: '',
       contact_email_only: '',
       hrf_opt_in: '',
+      outreach_status: 'new',
       addedAt: '',
       addedBy: '',
       updatedAt: '',
@@ -486,6 +491,7 @@ async function handleAddApprovalRequest(
     signal: input.signal || existing?.signal || '',
     contact_email_only: input.contact_email_only || existing?.contact_email_only || '',
     hrf_opt_in: input.hrf_opt_in || existing?.hrf_opt_in || '',
+    outreach_status: input.outreach_status || existing?.outreach_status || 'new',
     addedAt: existing?.addedAt || now,
     addedBy: existing?.addedBy || verified.pubkey,
     updatedAt: now,
@@ -555,6 +561,7 @@ async function handleUpdateApprovalRequest(
     signal: input.signal,
     contact_email_only: input.contact_email_only,
     hrf_opt_in: input.hrf_opt_in,
+    outreach_status: input.outreach_status || existing.outreach_status || 'new',
     updatedAt: now,
     updatedBy: verified.pubkey,
   };
@@ -741,6 +748,7 @@ async function handleDecideApplication(
       signal: existing?.signal || '',
       contact_email_only: existing?.contact_email_only || '',
       hrf_opt_in: sanitizeText(body.hrf_opt_in, 3) || existing?.hrf_opt_in || '',
+      outreach_status: existing?.outreach_status || 'new',
       addedAt: existing?.addedAt || now,
       addedBy: existing?.addedBy || verified.pubkey,
       updatedAt: now,

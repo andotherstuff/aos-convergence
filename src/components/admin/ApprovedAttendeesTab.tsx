@@ -16,7 +16,16 @@ type EditState = Record<string, {
   signal: string;
   contact_email_only: string;
   hrf_opt_in: string;
+  outreach_status: string;
 }>;
+
+type OutreachFilter = 'all' | 'new' | 'contacted' | 'confirmed';
+
+const OUTREACH_OPTIONS = [
+  { value: 'new', label: 'New' },
+  { value: 'contacted', label: 'Contacted' },
+  { value: 'confirmed', label: 'Confirmed' },
+];
 
 function escapeCsv(value: string): string {
   const escaped = value.replaceAll('"', '""');
@@ -26,13 +35,13 @@ function escapeCsv(value: string): string {
 function downloadApprovalsCsv(list: ApprovalRecord[]) {
   const header = [
     'npub', 'name', 'email', 'tshirt_size', 'dietary_restrictions', 'mobility_concerns',
-    'signal', 'contact_email_only', 'hrf_opt_in',
+    'signal', 'contact_email_only', 'hrf_opt_in', 'outreach_status',
     'addedAt', 'addedBy', 'updatedAt', 'updatedBy',
   ];
   const rows = list.map((item) => [
     item.npub, item.name, item.email,
     item.tshirt_size, item.dietary_restrictions, item.mobility_concerns,
-    item.signal, item.contact_email_only, item.hrf_opt_in,
+    item.signal, item.contact_email_only, item.hrf_opt_in, item.outreach_status,
     item.addedAt, item.addedBy, item.updatedAt, item.updatedBy,
   ]);
 
@@ -67,6 +76,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
   const [edits, setEdits] = useState<EditState>({});
   const [bulkOpen, setBulkOpen] = useState(false);
   const [viewingApplication, setViewingApplication] = useState<FormspreeSubmission | null>(null);
+  const [outreachFilter, setOutreachFilter] = useState<OutreachFilter>('new');
+  const [search, setSearch] = useState('');
 
   const list = approvalsQuery.data?.items ?? [];
   const loading = approvalsQuery.isLoading;
@@ -98,14 +109,54 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         signal: item.signal ?? '',
         contact_email_only: item.contact_email_only ?? '',
         hrf_opt_in: hrf,
+        outreach_status: item.outreach_status || 'new',
       };
     }
     setEdits(next);
   }, [list, submissionsByNpub]);
 
   const busy = addMutation.isPending || updateMutation.isPending || removeMutation.isPending;
-  const hasRows = list.length > 0;
   const sortedList = useMemo(() => [...list].sort((a, b) => a.npub.localeCompare(b.npub)), [list]);
+
+  // Counts per outreach status
+  const counts = useMemo(() => {
+    const c = { all: list.length, new: 0, contacted: 0, confirmed: 0 };
+    for (const item of list) {
+      const status = (edits[item.npub]?.outreach_status || item.outreach_status || 'new') as keyof typeof c;
+      if (status in c) c[status]++;
+    }
+    return c;
+  }, [list, edits]);
+
+  // Filtered list
+  const filteredList = useMemo(() => {
+    let result = sortedList;
+
+    // Status filter
+    if (outreachFilter !== 'all') {
+      result = result.filter((item) => {
+        const status = edits[item.npub]?.outreach_status || item.outreach_status || 'new';
+        return status === outreachFilter;
+      });
+    }
+
+    // Text search
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((item) => {
+        const edit = edits[item.npub];
+        return (
+          item.npub.toLowerCase().includes(q) ||
+          (edit?.name ?? item.name ?? '').toLowerCase().includes(q) ||
+          (edit?.email ?? item.email ?? '').toLowerCase().includes(q)
+        );
+      });
+    }
+
+    return result;
+  }, [sortedList, outreachFilter, search, edits]);
+
+  const hasRows = filteredList.length > 0;
 
   const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
@@ -169,7 +220,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         edit.mobility_concerns === (item.mobility_concerns ?? '') &&
         edit.signal === (item.signal ?? '') &&
         edit.contact_email_only === (item.contact_email_only ?? '') &&
-        edit.hrf_opt_in === (item.hrf_opt_in ?? '')
+        edit.hrf_opt_in === (item.hrf_opt_in ?? '') &&
+        edit.outreach_status === (item.outreach_status || 'new')
       ) continue;
 
       try {
@@ -183,6 +235,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
           signal: edit.signal,
           contact_email_only: edit.contact_email_only,
           hrf_opt_in: edit.hrf_opt_in,
+          outreach_status: edit.outreach_status,
         });
         saved++;
       } catch (error) {
@@ -238,8 +291,36 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         </Button>
       </form>
 
+      {/* Status tabs + search */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        {(['all', 'new', 'contacted', 'confirmed'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setOutreachFilter(tab)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              outreachFilter === tab
+                ? 'bg-foreground text-background'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            <span className="ml-1.5 opacity-70">{counts[tab]}</span>
+          </button>
+        ))}
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, email, npub..."
+          className="h-8 rounded-lg text-xs w-56 ml-auto"
+        />
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <p className="text-xs text-muted-foreground">Total attendees: {list.length}</p>
+        <p className="text-xs text-muted-foreground">
+          {filteredList.length === list.length
+            ? `${list.length} attendees`
+            : `${filteredList.length} of ${list.length} attendees`}
+        </p>
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
@@ -263,7 +344,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
             size="sm"
             className="rounded-lg"
             onClick={() => downloadApprovalsCsv(sortedList)}
-            disabled={!hasRows}
+            disabled={!list.length}
           >
             Export CSV
           </Button>
@@ -273,8 +354,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1310px]">
-          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_82px] gap-3 px-4 py-3 bg-card border-b border-border">
+        <div className="min-w-[1420px]">
+          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_100px_80px_82px] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
@@ -284,6 +365,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Signal</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Email only</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">HRF</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Outreach</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">App</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Remove</p>
           </div>
@@ -291,18 +373,20 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
           {loading ? (
             <div className="px-4 py-6 text-sm text-muted-foreground">Loading approvals...</div>
           ) : !hasRows ? (
-            <div className="px-4 py-6 text-sm text-muted-foreground">No approved npubs yet.</div>
+            <div className="px-4 py-6 text-sm text-muted-foreground">
+              {list.length === 0 ? 'No approved npubs yet.' : 'No attendees match the current filters.'}
+            </div>
           ) : (
             <div>
-              {sortedList.map((item) => {
+              {filteredList.map((item) => {
                 const edit = edits[item.npub] ?? {
                   name: '', email: '', tshirt_size: '', dietary_restrictions: '', mobility_concerns: '',
-                  signal: '', contact_email_only: '', hrf_opt_in: '',
+                  signal: '', contact_email_only: '', hrf_opt_in: '', outreach_status: 'new',
                 };
                 return (
                   <div
                     key={item.npub}
-                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_80px_82px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
+                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_100px_80px_82px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
                   >
                     <code className="text-xs break-all">{item.npub}</code>
                     <Input
@@ -379,6 +463,20 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                         <SelectItem value="_none">-</SelectItem>
                         <SelectItem value="yes">y</SelectItem>
                         <SelectItem value="no">n</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={edit.outreach_status || 'new'}
+                      onValueChange={(v) => updateEdit(item.npub, 'outreach_status', v)}
+                      disabled={isForbidden || busy}
+                    >
+                      <SelectTrigger className="h-9 rounded-lg text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OUTREACH_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <div className="text-center">

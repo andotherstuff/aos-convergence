@@ -13,6 +13,7 @@ export interface ApprovalRecord {
   signal: string;
   contact_email_only: string;
   hrf_opt_in: string;
+  outreach_status: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -29,6 +30,7 @@ export interface ApprovalUpsertInput {
   signal?: string;
   contact_email_only?: string;
   hrf_opt_in?: string;
+  outreach_status?: string;
 }
 
 interface ApprovalsResponse {
@@ -59,12 +61,12 @@ export function useAdminApprovals() {
   });
 
   const addMutation = useMutation({
-    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in }: ApprovalUpsertInput) => {
+    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in, outreach_status }: ApprovalUpsertInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/approvals`;
       const response = await authFetch(user, url, 'POST', {
-        npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in,
+        npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in, outreach_status,
       });
       if (!response.ok) {
         throw await parseError(response);
@@ -77,12 +79,12 @@ export function useAdminApprovals() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in }: ApprovalUpsertInput) => {
+    mutationFn: async ({ npub, name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in, outreach_status }: ApprovalUpsertInput) => {
       if (!user) throw new Error('Not logged in');
 
       const url = `${API_BASE}/api/admin/approvals/${encodeURIComponent(npub)}`;
       const response = await authFetch(user, url, 'PUT', {
-        name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in,
+        name, email, tshirt_size, dietary_restrictions, mobility_concerns, signal, contact_email_only, hrf_opt_in, outreach_status,
       });
       if (!response.ok) {
         throw await parseError(response);
