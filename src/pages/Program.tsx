@@ -191,7 +191,7 @@ const Program = () => {
         <div className="space-y-4">
           <div>
             <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-1 block">
-              Draft
+              At a Glance
             </span>
             <h2 className="text-[1.4rem] font-semibold tracking-[-0.02em] text-foreground">
               Event Flow
@@ -202,32 +202,29 @@ const Program = () => {
             <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
               <h3 className="text-sm font-semibold text-foreground mb-1">Day 1 — Orientation and Open Space</h3>
               <ul className="text-sm leading-relaxed text-muted-foreground space-y-1 mt-2">
-                <li>Arrival and informal connections</li>
+                <li>Arrival, registration, and breakfast</li>
                 <li>Opening session introducing AOS and the goals of the convergence</li>
-                <li>Creation of the Open Space agenda</li>
-                <li>Multiple Open Space session blocks throughout the day</li>
-                <li>Informal dinner and social time</li>
+                <li>Open Space kickoff — propose sessions</li>
+                <li>Four Open Space session blocks throughout the day</li>
               </ul>
             </div>
 
             <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
               <h3 className="text-sm font-semibold text-foreground mb-1">Day 2 — Hackathon Launch</h3>
               <ul className="text-sm leading-relaxed text-muted-foreground space-y-1 mt-2">
-                <li>Full-group session launching the hackathon</li>
-                <li>Introduction to the agentic tools</li>
-                <li>Formation of teams</li>
-                <li>Multiple hackathon work blocks throughout the day</li>
-                <li>Optional evening hacking and informal collaboration</li>
+                <li>Full-group session launching the hackathon and introducing the agentic tools</li>
+                <li>Team formation and hackathon work blocks</li>
+                <li>Last-minute hacking and judging</li>
               </ul>
             </div>
 
             <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
-              <h3 className="text-sm font-semibold text-foreground mb-1">Day 3 — Hackathon Completion and Closing</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Day 3 — Presentations and Closing</h3>
               <ul className="text-sm leading-relaxed text-muted-foreground space-y-1 mt-2">
-                <li>Final hackathon work block</li>
-                <li>Project demonstrations</li>
-                <li>Closing full-group reflection session</li>
-                <li>Farewell lunch before departure</li>
+                <li>Hackathon finalist presentations</li>
+                <li>What's Next — open session on taking ideas forward</li>
+                <li>Farewell lunch</li>
+                <li>Closing session with reflections and awards</li>
               </ul>
             </div>
           </div>
