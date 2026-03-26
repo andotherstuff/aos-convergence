@@ -59,7 +59,7 @@ function downloadApprovalsCsv(list: ApprovalRecord[]) {
   URL.revokeObjectURL(url);
 }
 
-const TSHIRT_SIZES = ['', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const TSHIRT_SIZES = ['', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
 interface Props {
   isForbidden: boolean;
