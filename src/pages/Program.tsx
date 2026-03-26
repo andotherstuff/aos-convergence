@@ -116,7 +116,7 @@ const Program = () => {
             <li>When it is over, it is over.</li>
           </ul>
 
-          <h3 className="text-base font-semibold text-foreground pt-3">The Rule of Human Agency</h3>
+          <h3 className="text-base font-semibold text-foreground pt-3">The Law of Human Agency</h3>
           <p className="text-sm leading-relaxed text-muted-foreground">
             If you find yourself in a situation where you are neither learning nor contributing, you are encouraged to use your agency to move somewhere you can.
           </p>

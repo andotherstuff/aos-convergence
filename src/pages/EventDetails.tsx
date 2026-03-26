@@ -227,10 +227,10 @@ const EventDetails = () => {
           </div>
         </div>
 
-        {/* Hackathon Deep Dive */}
+        {/* Hackathon */}
         <div>
           <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-2 block">
-            Days 2–3
+            Day 2
           </span>
           <h2 className="text-[1.4rem] font-semibold tracking-[-0.02em] text-foreground mb-2">
             The Hackathon
@@ -252,11 +252,42 @@ const EventDetails = () => {
             <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
               <h3 className="text-sm font-semibold text-foreground mb-2">How it works</h3>
               <ul className="text-sm text-muted-foreground leading-relaxed space-y-1">
-                <li>Day 2 morning: intro to agentic tools and team formation</li>
-                <li>Day 2: multiple sustained work blocks for building</li>
-                <li>Day 3 morning: final work block</li>
-                <li>Day 3 midday: project demonstrations</li>
+                <li>Morning: intro to agentic tools and team formation</li>
+                <li>Hackathon work blocks throughout the day</li>
+                <li>Last-minute hacking and judging to close the day</li>
                 <li>Form teams or work individually — your choice</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Presentations & Closing */}
+        <div>
+          <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-2 block">
+            Day 3
+          </span>
+          <h2 className="text-[1.4rem] font-semibold tracking-[-0.02em] text-foreground mb-2">
+            Presentations & Closing
+          </h2>
+          <p className="text-sm leading-relaxed text-muted-foreground max-w-2xl mb-4">
+            The final day brings everything together — hackathon finalists present their work, participants connect around what comes next, and we close with reflections and awards.
+          </p>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
+              <h3 className="text-sm font-semibold text-foreground mb-2">The day</h3>
+              <ul className="text-sm text-muted-foreground leading-relaxed space-y-1">
+                <li>Hackathon finalist presentations</li>
+                <li>What's Next — open session on taking ideas forward</li>
+                <li>Farewell lunch</li>
+                <li>Closing session with reflections and awards</li>
+              </ul>
+            </div>
+            <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
+              <h3 className="text-sm font-semibold text-foreground mb-2">What's Next session</h3>
+              <ul className="text-sm text-muted-foreground leading-relaxed space-y-1">
+                <li>How to take your ideas forward after the event</li>
+                <li>Find collaborators and build connections</li>
+                <li>Bridge the convergence to what happens at home</li>
               </ul>
             </div>
           </div>
@@ -313,14 +344,14 @@ const EventDetails = () => {
           <p className="text-sm leading-relaxed text-muted-foreground max-w-2xl mb-4">
             AOS Convergence takes place immediately before the{' '}
             <a href="https://hrf.org/latest/the-oslo-freedom-forum-returns-june-1-3-2026" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Oslo Freedom Forum</a>{' '}
-            (June 1–3), hosted by the Human Rights Foundation. Many participants will continue on to the forum.
+            (June 1–3). Thanks to the generosity of our sponsor, the Human Rights Foundation, accepted participants of AOS Convergence are eligible to receive a complimentary Forum pass for OFF.
           </p>
           <div className="grid md:grid-cols-2 gap-3 mb-3">
             <div className="aspect-[16/9] rounded-[18px] overflow-hidden bg-border">
-              <img src="/oslo-1.jpg" alt="Public art in Oslo" className="w-full h-full object-cover" />
+              <img src="/oslo-2.jpg" alt="Oslo Freedom Forum stage" className="w-full h-full object-cover" />
             </div>
             <div className="aspect-[16/9] rounded-[18px] overflow-hidden bg-border">
-              <img src="/oslo-2.jpg" alt="Oslo Freedom Forum stage" className="w-full h-full object-cover" />
+              <img src="/oslo-1.jpg" alt="Public art in Oslo" className="w-full h-full object-cover" />
             </div>
           </div>
           <div className="grid md:grid-cols-2 gap-3">
