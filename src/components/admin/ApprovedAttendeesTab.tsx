@@ -17,6 +17,7 @@ type EditState = Record<string, {
   contact_email_only: string;
   hrf_opt_in: string;
   outreach_status: string;
+  notes: string;
 }>;
 
 type OutreachFilter = 'all' | 'new' | 'contacted' | 'confirmed';
@@ -35,13 +36,13 @@ function escapeCsv(value: string): string {
 function downloadApprovalsCsv(list: ApprovalRecord[]) {
   const header = [
     'npub', 'name', 'email', 'tshirt_size', 'dietary_restrictions', 'mobility_concerns',
-    'signal', 'contact_email_only', 'hrf_opt_in', 'outreach_status',
+    'signal', 'contact_email_only', 'hrf_opt_in', 'outreach_status', 'notes',
     'addedAt', 'addedBy', 'updatedAt', 'updatedBy',
   ];
   const rows = list.map((item) => [
     item.npub, item.name, item.email,
     item.tshirt_size, item.dietary_restrictions, item.mobility_concerns,
-    item.signal, item.contact_email_only, item.hrf_opt_in, item.outreach_status,
+    item.signal, item.contact_email_only, item.hrf_opt_in, item.outreach_status, item.notes,
     item.addedAt, item.addedBy, item.updatedAt, item.updatedBy,
   ]);
 
@@ -110,6 +111,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         contact_email_only: item.contact_email_only ?? '',
         hrf_opt_in: hrf,
         outreach_status: item.outreach_status || 'new',
+        notes: item.notes ?? '',
       };
     }
     setEdits(next);
@@ -221,7 +223,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
         edit.signal === (item.signal ?? '') &&
         edit.contact_email_only === (item.contact_email_only ?? '') &&
         edit.hrf_opt_in === (item.hrf_opt_in ?? '') &&
-        edit.outreach_status === (item.outreach_status || 'new')
+        edit.outreach_status === (item.outreach_status || 'new') &&
+        edit.notes === (item.notes ?? '')
       ) continue;
 
       try {
@@ -236,6 +239,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
           contact_email_only: edit.contact_email_only,
           hrf_opt_in: edit.hrf_opt_in,
           outreach_status: edit.outreach_status,
+          notes: edit.notes,
         });
         saved++;
       } catch (error) {
@@ -354,8 +358,8 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
       {message && <p className="text-sm text-muted-foreground mb-4">{message}</p>}
 
       <div className="rounded-2xl border border-border overflow-x-auto">
-        <div className="min-w-[1420px]">
-          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_100px_80px_82px] gap-3 px-4 py-3 bg-card border-b border-border">
+        <div className="min-w-[1570px]">
+          <div className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_100px_80px_82px_150px] gap-3 px-4 py-3 bg-card border-b border-border">
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">npub</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Name / nym</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Email</p>
@@ -368,6 +372,7 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Outreach</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">App</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground text-center">Remove</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Notes</p>
           </div>
 
           {loading ? (
@@ -381,12 +386,12 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
               {filteredList.map((item) => {
                 const edit = edits[item.npub] ?? {
                   name: '', email: '', tshirt_size: '', dietary_restrictions: '', mobility_concerns: '',
-                  signal: '', contact_email_only: '', hrf_opt_in: '', outreach_status: 'new',
+                  signal: '', contact_email_only: '', hrf_opt_in: '', outreach_status: 'new', notes: '',
                 };
                 return (
                   <div
                     key={item.npub}
-                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_100px_80px_82px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
+                    className="grid grid-cols-[240px_120px_160px_75px_120px_120px_52px_62px_42px_100px_80px_82px_150px] gap-3 px-4 py-3 border-b border-border last:border-b-0 items-center"
                   >
                     <code className="text-xs break-all">{item.npub}</code>
                     <Input
@@ -502,6 +507,13 @@ export function ApprovedAttendeesTab({ isForbidden }: Props) {
                     >
                       Remove
                     </Button>
+                    <Input
+                      value={edit.notes}
+                      onChange={(e) => updateEdit(item.npub, 'notes', e.target.value)}
+                      placeholder="Notes"
+                      className="h-9 rounded-lg"
+                      disabled={isForbidden || busy}
+                    />
                   </div>
                 );
               })}

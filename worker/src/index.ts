@@ -19,6 +19,7 @@ interface ApprovalRecord {
   contact_email_only: string;
   hrf_opt_in: string;
   outreach_status: string;
+  notes: string;
   addedAt: string;
   addedBy: string;
   updatedAt: string;
@@ -36,6 +37,7 @@ interface ApprovalInput {
   contact_email_only?: string;
   hrf_opt_in?: string;
   outreach_status?: string;
+  notes?: string;
 }
 
 interface ApplicationDecision {
@@ -181,7 +183,7 @@ function normalizeEmail(value: string | undefined): string {
 
 function normalizeApprovalInput(body: ApprovalInput): {
   name: string; email: string; tshirt_size: string; dietary_restrictions: string; mobility_concerns: string;
-  signal: string; contact_email_only: string;
+  signal: string; contact_email_only: string; hrf_opt_in: string; outreach_status: string; notes: string;
 } {
   return {
     name: sanitizeText(body.name, 120),
@@ -193,6 +195,7 @@ function normalizeApprovalInput(body: ApprovalInput): {
     contact_email_only: sanitizeText(body.contact_email_only, 3),
     hrf_opt_in: sanitizeText(body.hrf_opt_in, 3),
     outreach_status: sanitizeText(body.outreach_status, 20),
+    notes: sanitizeText(body.notes, 1000),
   };
 }
 
@@ -213,6 +216,7 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       contact_email_only: parsed.contact_email_only ?? '',
       hrf_opt_in: parsed.hrf_opt_in ?? '',
       outreach_status: parsed.outreach_status || 'new',
+      notes: parsed.notes ?? '',
       addedAt: parsed.addedAt ?? '',
       addedBy: parsed.addedBy ?? '',
       updatedAt: parsed.updatedAt ?? parsed.addedAt ?? '',
@@ -230,6 +234,7 @@ async function getApprovalRecord(kv: KVNamespace, npub: string): Promise<Approva
       contact_email_only: '',
       hrf_opt_in: '',
       outreach_status: 'new',
+      notes: '',
       addedAt: '',
       addedBy: '',
       updatedAt: '',
@@ -492,6 +497,7 @@ async function handleAddApprovalRequest(
     contact_email_only: input.contact_email_only || existing?.contact_email_only || '',
     hrf_opt_in: input.hrf_opt_in || existing?.hrf_opt_in || '',
     outreach_status: input.outreach_status || existing?.outreach_status || 'new',
+    notes: input.notes || existing?.notes || '',
     addedAt: existing?.addedAt || now,
     addedBy: existing?.addedBy || verified.pubkey,
     updatedAt: now,
@@ -562,6 +568,7 @@ async function handleUpdateApprovalRequest(
     contact_email_only: input.contact_email_only,
     hrf_opt_in: input.hrf_opt_in,
     outreach_status: input.outreach_status || existing.outreach_status || 'new',
+    notes: input.notes,
     updatedAt: now,
     updatedBy: verified.pubkey,
   };
@@ -749,6 +756,7 @@ async function handleDecideApplication(
       contact_email_only: existing?.contact_email_only || '',
       hrf_opt_in: sanitizeText(body.hrf_opt_in, 3) || existing?.hrf_opt_in || '',
       outreach_status: existing?.outreach_status || 'new',
+      notes: existing?.notes || '',
       addedAt: existing?.addedAt || now,
       addedBy: existing?.addedBy || verified.pubkey,
       updatedAt: now,
