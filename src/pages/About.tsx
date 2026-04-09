@@ -179,6 +179,44 @@ const About = () => {
             </Link>
           </div>
         </div>
+        {/* FAQ */}
+        <div className="space-y-3">
+          <h2 className="text-[1.4rem] font-semibold tracking-[-0.02em] text-foreground">
+            Frequently Asked Questions
+          </h2>
+          <dl className="space-y-4">
+            <div>
+              <dt className="text-sm font-medium text-foreground">What food will be provided?</dt>
+              <dd className="text-sm leading-relaxed text-muted-foreground mt-1">
+                We'll have a light breakfast, snacks throughout the day, and a full lunch on all three days.
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-foreground">What if I have dietary restrictions?</dt>
+              <dd className="text-sm leading-relaxed text-muted-foreground mt-1">
+                We'll reach out after your application is approved to gather any dietary needs. We aim to accommodate a wide range of restrictions.
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-foreground">Do I need to bring or present anything?</dt>
+              <dd className="text-sm leading-relaxed text-muted-foreground mt-1">
+                Nope—just bring yourself and your laptop. If you have a product or prototype you'd like to share, you're welcome to, but it's not required.
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-foreground">Will travel or accommodations be covered?</dt>
+              <dd className="text-sm leading-relaxed text-muted-foreground mt-1">
+                We're not able to offer travel scholarships at this time.
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-foreground">Do I need to pay for a ticket?</dt>
+              <dd className="text-sm leading-relaxed text-muted-foreground mt-1">
+                No—attendance is free. If you request an OFF pass, that is also provided at no cost.
+              </dd>
+            </div>
+          </dl>
+        </div>
       </article>
     </SiteLayout>
   );
