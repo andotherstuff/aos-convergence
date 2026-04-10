@@ -65,7 +65,7 @@ function getEventDetails(signalGroupLink: string) {
     signalGroupLink,
     schedule: [
       {
-        day: 'Day 1 — Thursday, May 29',
+        day: 'Day 1 — Friday, May 29',
         subtitle: 'Orientation & Open Space',
         items: [
           { time: '09:00–10:00', event: 'Arrival, Registration & Breakfast' },
@@ -80,7 +80,7 @@ function getEventDetails(signalGroupLink: string) {
         ],
       },
       {
-        day: 'Day 2 — Friday, May 30',
+        day: 'Day 2 — Saturday, May 30',
         subtitle: 'Hackathon Launch',
         items: [
           { time: '09:00–09:30', event: 'Coffee & Breakfast' },
@@ -93,7 +93,7 @@ function getEventDetails(signalGroupLink: string) {
         ],
       },
       {
-        day: 'Day 3 — Saturday, May 31',
+        day: 'Day 3 — Sunday, May 31',
         subtitle: 'Hackathon Completion & Closing',
         items: [
           { time: '09:00–09:30', event: 'Coffee & Breakfast' },
