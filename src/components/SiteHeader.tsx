@@ -4,6 +4,28 @@ import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useLoginActions } from '@/hooks/useLoginActions';
 import { useEventDetails } from '@/hooks/useEventDetails';
 import { Button } from '@/components/ui/button';
+import { APP_URL } from '@/lib/appLinks';
+
+/** Compact arrow-up-right glyph for external-link affordances. */
+function ExternalArrow({ className }: { className?: string }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <line x1="7" y1="17" x2="17" y2="7" />
+      <polyline points="8 7 17 7 17 16" />
+    </svg>
+  );
+}
 
 export function SiteHeader() {
   const location = useLocation();
@@ -58,6 +80,18 @@ export function SiteHeader() {
                 Log out
               </Button>
             )}
+            {/* Cross-link to the attendee app. Always visible — the app is
+                public and using it doesn't require approval. */}
+            <a
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open the AOS Convergence attendee app (opens in a new tab)"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-foreground text-background text-[0.85rem] font-medium hover:bg-foreground/90 transition-colors"
+            >
+              Open App
+              <ExternalArrow />
+            </a>
           </div>
           {/* Mobile hamburger button */}
           <button
@@ -100,6 +134,18 @@ export function SiteHeader() {
                 Log out
               </Button>
             )}
+            {/* Cross-link to the attendee app. Full-width pill, last item. */}
+            <a
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open the AOS Convergence attendee app (opens in a new tab)"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex items-center justify-center gap-1.5 mt-1 px-4 py-2.5 rounded-full bg-foreground text-background text-[0.9rem] font-medium hover:bg-foreground/90 transition-colors"
+            >
+              Open App
+              <ExternalArrow />
+            </a>
           </div>
         </div>
       )}

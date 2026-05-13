@@ -7,6 +7,7 @@ import { useLoginActions } from '@/hooks/useLoginActions';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { nip19 } from 'nostr-tools';
+import { APP_URL } from '@/lib/appLinks';
 
 const EventDetails = () => {
   const { user } = useCurrentUser();
@@ -110,47 +111,53 @@ const EventDetails = () => {
           <p className="text-base leading-relaxed text-muted-foreground mb-5">
             You're confirmed. Three days of Open Space, hackathon, and collaboration — here's everything you need.
           </p>
-          <a
-            href={data.signalGroupLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
-          >
-            Join the Signal Group
-          </a>
-          <p className="text-xs text-muted-foreground mt-2">All event coordination happens here</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href={data.signalGroupLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
+            >
+              Join the Signal Group
+            </a>
+            <a
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open the AOS Convergence attendee app (opens in a new tab)"
+              className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full border border-foreground/15 text-sm font-medium text-foreground hover:bg-foreground/[0.04] transition-colors"
+            >
+              Open App
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="7" y1="17" x2="17" y2="7" />
+                <polyline points="8 7 17 7 17 16" />
+              </svg>
+            </a>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 max-w-md mx-auto">
+            Signal is for private coordination. The app is for everything you'll share during the event.
+          </p>
         </div>
       </section>
 
-      {/* Three formats */}
-      <div className="max-w-[1120px] mx-auto px-6 -mt-1 mb-2">
-        <div className="grid md:grid-cols-3 gap-3">
-          <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
-            <h3 className="text-sm font-semibold text-foreground mb-1.5">Main Stage</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Full-group sessions that frame the work — opening, hackathon kickoff, and closing reflection.
-            </p>
-          </div>
-          <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
-            <h3 className="text-sm font-semibold text-foreground mb-1.5">Open Space</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Participants create the agenda together. Propose sessions, choose what to join, move freely.
-            </p>
-          </div>
-          <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
-            <h3 className="text-sm font-semibold text-foreground mb-1.5">Hackathon</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Two days building with agentic tools from the AOS core team. Teams or solo. Collaboration over competition.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Everything else in a single flowing container */}
+      {/* Everything else in a single flowing container.
+          The timed schedule sits first so the very first thing under the
+          hero answers "what is happening at what time?". The format
+          mini-cards and per-format narratives follow. */}
       <div className="max-w-[1120px] mx-auto px-6 py-12 space-y-10">
 
         {/* Schedule */}
-        <div>
+        <div id="schedule" className="scroll-mt-24">
           <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-2 block">
             Schedule
           </span>
@@ -178,13 +185,39 @@ const EventDetails = () => {
           </p>
         </div>
 
+        {/* Three formats — a compact teaser introducing the deep-dive
+            sections that follow. Kept after the timed schedule so it does
+            not compete with the schedule for the "first impression" slot. */}
+        <div>
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">Main Stage</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Full-group sessions that frame the work — opening, hackathon kickoff, and closing reflection.
+              </p>
+            </div>
+            <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">Open Space</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Participants create the agenda together. Propose sessions, choose what to join, move freely.
+              </p>
+            </div>
+            <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm">
+              <h3 className="text-sm font-semibold text-foreground mb-1.5">Hackathon</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Two days building with agentic tools from the AOS core team. Teams or solo. Collaboration over competition.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Open Space Deep Dive */}
         <div>
           <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-2 block">
-            Day 1
+            Open Space
           </span>
           <h2 className="text-[1.4rem] font-semibold tracking-[-0.02em] text-foreground mb-2">
-            Open Space
+            How Open Space works
           </h2>
           <p className="text-sm leading-relaxed text-muted-foreground max-w-2xl mb-4">
             After the opening session, we'll use Open Space — a facilitation method where participants create the agenda together based on the topics, questions, and projects they care most about.
@@ -230,7 +263,7 @@ const EventDetails = () => {
         {/* Hackathon */}
         <div>
           <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-2 block">
-            Day 2
+            Hackathon
           </span>
           <h2 className="text-[1.4rem] font-semibold tracking-[-0.02em] text-foreground mb-2">
             The Hackathon
@@ -264,7 +297,7 @@ const EventDetails = () => {
         {/* Presentations & Closing */}
         <div>
           <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-2 block">
-            Day 3
+            Main Stage
           </span>
           <h2 className="text-[1.4rem] font-semibold tracking-[-0.02em] text-foreground mb-2">
             Presentations & Closing

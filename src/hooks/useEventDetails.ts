@@ -4,12 +4,19 @@ import { API_BASE } from '@/lib/apiBase';
 import { createNip98Token } from '@/lib/nip98Auth';
 
 export interface ScheduleItem {
+  /** Human-readable display string, e.g. "09:00–10:00". */
   time: string;
+  /** Parsed start time in HH:MM (24-hour, Europe/Oslo). Optional for backward compatibility. */
+  start?: string;
+  /** Parsed end time in HH:MM (24-hour, Europe/Oslo). Optional for backward compatibility. */
+  end?: string;
   event: string;
 }
 
 export interface ScheduleDay {
   day: string;
+  /** ISO date (YYYY-MM-DD) the items fall on. Optional for backward compatibility. */
+  date?: string;
   subtitle: string;
   items: ScheduleItem[];
 }
@@ -17,6 +24,12 @@ export interface ScheduleDay {
 export interface EventDetailsData {
   signalGroupLink: string;
   schedule: ScheduleDay[];
+  /** IANA timezone the schedule is expressed in. Defaults to Europe/Oslo. */
+  timezone?: string;
+  /** ISO 8601 timestamp of the event's first item. */
+  eventStart?: string;
+  /** ISO 8601 timestamp of the event's last item end. */
+  eventEnd?: string;
   location: {
     city: string;
     venueNote: string;

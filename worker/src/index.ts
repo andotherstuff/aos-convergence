@@ -60,49 +60,64 @@ interface NostrAuthEvent {
 
 // Event details — only returned to approved attendees.
 // These never appear in the frontend bundle.
+//
+// The schedule is consumed by two clients:
+//   1. The website at /event#schedule (renders by `time` for display).
+//   2. The attendee app at /schedule (additionally uses `date`, `start`,
+//      `end`, and the top-level `timezone` to compute "now happening").
+//
+// `time` is kept as the human-readable display string. `start` / `end` are
+// parsed 24-hour clock strings for client time math. `date` is an ISO date.
+// All times are in `Europe/Oslo`.
 function getEventDetails(signalGroupLink: string) {
   return {
     signalGroupLink,
+    timezone: 'Europe/Oslo',
+    eventStart: '2026-05-29T09:00:00+02:00',
+    eventEnd: '2026-05-31T15:00:00+02:00',
     schedule: [
       {
         day: 'Day 1 — Friday, May 29',
+        date: '2026-05-29',
         subtitle: 'Orientation & Open Space',
         items: [
-          { time: '09:00–10:00', event: 'Arrival, Registration & Breakfast' },
-          { time: '10:00–11:00', event: 'Opening Session — Welcome to AOS Convergence' },
-          { time: '11:00–11:30', event: 'Open Space Kickoff — Propose Sessions' },
-          { time: '11:30–12:30', event: 'Open Space — Session Block 1' },
-          { time: '12:30–13:30', event: 'Lunch' },
-          { time: '13:30–14:30', event: 'Open Space — Session Block 2' },
-          { time: '14:30–15:30', event: 'Open Space — Session Block 3' },
-          { time: '15:30–16:00', event: 'Break' },
-          { time: '16:00–17:00', event: 'Open Space — Session Block 4' },
+          { time: '09:00–10:00', start: '09:00', end: '10:00', event: 'Arrival, Registration & Breakfast' },
+          { time: '10:00–11:00', start: '10:00', end: '11:00', event: 'Opening Session — Welcome to AOS Convergence' },
+          { time: '11:00–11:30', start: '11:00', end: '11:30', event: 'Open Space Kickoff — Propose Sessions' },
+          { time: '11:30–12:30', start: '11:30', end: '12:30', event: 'Open Space — Session Block 1' },
+          { time: '12:30–13:30', start: '12:30', end: '13:30', event: 'Lunch' },
+          { time: '13:30–14:30', start: '13:30', end: '14:30', event: 'Open Space — Session Block 2' },
+          { time: '14:30–15:30', start: '14:30', end: '15:30', event: 'Open Space — Session Block 3' },
+          { time: '15:30–16:00', start: '15:30', end: '16:00', event: 'Break' },
+          { time: '16:00–17:00', start: '16:00', end: '17:00', event: 'Open Space — Session Block 4' },
         ],
       },
       {
         day: 'Day 2 — Saturday, May 30',
+        date: '2026-05-30',
         subtitle: 'Hackathon Launch',
         items: [
-          { time: '09:00–09:30', event: 'Coffee & Breakfast' },
-          { time: '09:30–10:30', event: 'Hackathon Kickoff — Intro to Agentic Tools' },
-          { time: '10:30–12:30', event: 'Team Formation & Hackathon — Work Block 1' },
-          { time: '12:30–13:30', event: 'Lunch' },
-          { time: '13:30–15:00', event: 'Hackathon — Work Block 2' },
-          { time: '15:00–15:30', event: 'Break' },
-          { time: '15:30–17:00', event: 'Last-Minute Hacking & Judging' },
+          { time: '09:00–09:30', start: '09:00', end: '09:30', event: 'Coffee & Breakfast' },
+          { time: '09:30–10:30', start: '09:30', end: '10:30', event: 'Hackathon Kickoff — Intro to Agentic Tools' },
+          { time: '10:30–12:30', start: '10:30', end: '12:30', event: 'Team Formation & Hackathon — Work Block 1' },
+          { time: '12:30–13:30', start: '12:30', end: '13:30', event: 'Lunch' },
+          { time: '13:30–15:00', start: '13:30', end: '15:00', event: 'Hackathon — Work Block 2' },
+          { time: '15:00–15:30', start: '15:00', end: '15:30', event: 'Break' },
+          { time: '15:30–17:00', start: '15:30', end: '17:00', event: 'Last-Minute Hacking & Judging' },
         ],
       },
       {
         day: 'Day 3 — Sunday, May 31',
+        date: '2026-05-31',
         subtitle: 'Hackathon Completion & Closing',
         items: [
-          { time: '09:00–09:30', event: 'Coffee & Breakfast' },
-          { time: '09:30–10:30', event: 'Hackathon Finalist Presentations' },
-          { time: '10:30–11:00', event: 'Break — Judges Deliberate' },
-          { time: '11:00–12:30', event: 'What\'s Next — Open Session on Taking Ideas Forward' },
-          { time: '12:30–13:30', event: 'Farewell Lunch' },
-          { time: '13:30–14:30', event: 'Closing Session — Reflections & Awards' },
-          { time: '14:30–15:00', event: 'Hangout & Goodbyes' },
+          { time: '09:00–09:30', start: '09:00', end: '09:30', event: 'Coffee & Breakfast' },
+          { time: '09:30–10:30', start: '09:30', end: '10:30', event: 'Hackathon Finalist Presentations' },
+          { time: '10:30–11:00', start: '10:30', end: '11:00', event: 'Break — Judges Deliberate' },
+          { time: '11:00–12:30', start: '11:00', end: '12:30', event: 'What\'s Next — Open Session on Taking Ideas Forward' },
+          { time: '12:30–13:30', start: '12:30', end: '13:30', event: 'Farewell Lunch' },
+          { time: '13:30–14:30', start: '13:30', end: '14:30', event: 'Closing Session — Reflections & Awards' },
+          { time: '14:30–15:00', start: '14:30', end: '15:00', event: 'Hangout & Goodbyes' },
         ],
       },
     ],
@@ -114,12 +129,33 @@ function getEventDetails(signalGroupLink: string) {
   };
 }
 
+/**
+ * Origins permitted to call this worker cross-origin. Both the website and
+ * the attendee app are listed explicitly; localhost variants cover both
+ * dev servers (website on :8080 via Vite; app on :8080 via Vite — they
+ * collide locally, so we also allow :5173 and :3000 as common defaults).
+ *
+ * NIP-98 still gates per-request access; CORS is defense in depth.
+ */
+const ALLOWED_ORIGINS = new Set<string>([
+  'https://convergence.andotherstuff.org',
+  'https://aos-convergence.app',
+  'http://localhost:8080',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:8080',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+]);
+
 function corsHeaders(origin: string | null): Record<string, string> {
+  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : 'https://convergence.andotherstuff.org';
   return {
-    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
   };
 }
 

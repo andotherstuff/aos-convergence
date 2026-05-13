@@ -43,6 +43,23 @@ npx wrangler dev
 
 Set `VITE_API_URL` in your environment to point at the worker (defaults to `http://localhost:8787`).
 
+### Cross-project links
+
+This site is one of two related projects that share branding and link to each other:
+
+- **Website** (this repo) — `convergence.andotherstuff.org`. Marketing/info site with the canonical event schedule, About, application form, and gated `/event` page for approved attendees.
+- **Attendee app** (`convergence-app` repo) — `aos-convergence.app`. Public Nostr-powered companion for attendees (social feed, projects, announcements).
+
+The URLs used to link between them are centralized in [`src/lib/appLinks.ts`](src/lib/appLinks.ts) and can be overridden at build time:
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `VITE_API_URL` | `http://localhost:8787` (dev) | Cloudflare Worker API base |
+| `VITE_APP_URL` | `https://aos-convergence.app` | Attendee app URL used in header/footer/event-page CTAs |
+| `VITE_WEBSITE_URL` | `https://convergence.andotherstuff.org` | Self-reference used to build deep-link anchors |
+
+Shared design tokens (colors, radii, eyebrow/CTA patterns, header lockup) are documented in [`BRAND.md`](BRAND.md) — both projects follow it to stay visually aligned.
+
 ## Managing approved attendee npubs
 
 This project now uses a Cloudflare KV namespace for approvals so multiple admins can manage access from the app.

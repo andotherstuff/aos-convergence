@@ -1,6 +1,27 @@
 import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
 import { SiteLayout } from '@/components/SiteLayout';
+import { APP_URL } from '@/lib/appLinks';
+
+/** Compact arrow-up-right glyph for "opens in a new tab" affordances. */
+function ExternalArrow() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="7" y1="17" x2="17" y2="7" />
+      <polyline points="8 7 17 7 17 16" />
+    </svg>
+  );
+}
 
 const Program = () => {
   useSeoMeta({
@@ -188,7 +209,7 @@ const Program = () => {
         </div>
 
         {/* Draft Event Flow */}
-        <div className="space-y-4">
+        <div id="event-flow" className="space-y-4 scroll-mt-24">
           <div>
             <span className="text-xs font-medium tracking-[0.16em] uppercase text-muted-foreground/60 mb-1 block">
               At a Glance
@@ -229,13 +250,29 @@ const Program = () => {
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-wrap items-center gap-3">
             <Link
               to="/interest"
               className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
             >
               Apply to Attend
             </Link>
+            <Link
+              to="/event#schedule"
+              className="inline-flex items-center px-5 py-3 rounded-full border border-foreground/15 text-sm font-medium text-foreground hover:bg-foreground/[0.04] transition-colors"
+            >
+              See the full timed agenda →
+            </Link>
+            <a
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-5 py-3 rounded-full border border-foreground/15 text-sm font-medium text-foreground hover:bg-foreground/[0.04] transition-colors"
+              aria-label="Open the AOS Convergence attendee app (opens in a new tab)"
+            >
+              Approved? Open App
+              <ExternalArrow />
+            </a>
           </div>
         </div>
       </article>
