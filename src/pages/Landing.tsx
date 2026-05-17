@@ -85,12 +85,6 @@ const Landing = () => {
             </p>
             <div className="flex flex-wrap gap-3">
               <a
-                href="#login"
-                className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
-              >
-                Attendee Login
-              </a>
-              <a
                 href="/about"
                 className="inline-flex items-center px-6 py-3 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
