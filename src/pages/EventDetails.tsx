@@ -1,5 +1,5 @@
 import { useSeoMeta } from '@unhead/react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { SiteLayout } from '@/components/SiteLayout';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useEventDetails } from '@/hooks/useEventDetails';
@@ -80,12 +80,6 @@ const EventDetails = () => {
             >
               Log out and try a different key
             </Button>
-            <Link
-              to="/interest"
-              className="inline-flex items-center px-4 py-2 rounded-xl bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
-            >
-              Apply to attend
-            </Link>
           </div>
         </div>
       </SiteLayout>

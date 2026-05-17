@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { SiteLayout } from '@/components/SiteLayout';
 import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useLoginActions } from '@/hooks/useLoginActions';
@@ -39,6 +39,7 @@ const Landing = () => {
         throw new Error('No Nostr extension found. Install a NIP-07 extension (nos2x, Alby, etc.).');
       }
       await login.extension();
+      navigate('/event');
     } catch (e) {
       setError((e as Error).message || 'Extension login failed');
     } finally {
@@ -60,6 +61,7 @@ const Landing = () => {
     setLoading(true);
     try {
       login.nsec(trimmed);
+      navigate('/event');
     } catch {
       setError('Invalid secret key.');
       setLoading(false);
@@ -82,37 +84,31 @@ const Landing = () => {
               actively working to expand human agency through open systems.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link
-                to="/interest"
+              <a
+                href="#login"
                 className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
               >
-                Apply to Attend
-              </Link>
-              <Link
-                to="/about"
+                Attendee Login
+              </a>
+              <a
+                href="/about"
                 className="inline-flex items-center px-6 py-3 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Learn More
-              </Link>
+              </a>
             </div>
           </div>
 
-          <div className="bg-card rounded-[28px] p-8 shadow-[0_18px_45px_rgba(0,0,0,0.08)] border border-border">
+          <div id="login" className="bg-card rounded-[28px] p-8 shadow-[0_18px_45px_rgba(0,0,0,0.08)] border border-border">
             {isNotApproved ? (
               <>
                 <h2 className="text-lg font-semibold tracking-[-0.02em] text-foreground mb-4">
                   You're not on the approved list yet
                 </h2>
                 <p className="text-sm leading-relaxed text-muted-foreground mb-6">
-                  Your Nostr identity was not found on our attendee list. If you haven't applied yet, you can submit an application below.
+                  Your Nostr identity was not found on our attendee list. If you believe this is an error or need help, contact the organizers.
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <Link
-                    to="/interest"
-                    className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
-                  >
-                    Apply to Attend
-                  </Link>
                   <Button
                     variant="outline"
                     onClick={() => { login.logout(); }}

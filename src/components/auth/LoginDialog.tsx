@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useLoginActions } from '@/hooks/useLoginActions';
 import { DialogTitle } from '@radix-ui/react-dialog';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ const validateBunkerUri = (uri: string) => {
 };
 
 const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isFileLoading, setIsFileLoading] = useState(false);
   const [nsec, setNsec] = useState('');
@@ -67,6 +69,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) =
       await login.extension();
       onLogin();
       onClose();
+      navigate('/event');
     } catch (e: unknown) {
       const error = e as Error;
       console.error('Bunker login failed:', error);
@@ -91,6 +94,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) =
         login.nsec(key);
         onLogin();
         onClose();
+        navigate('/event');
       } catch {
         setErrors({ nsec: "Failed to login with this key. Please check that it's correct." });
         setIsLoading(false);
@@ -129,6 +133,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) =
       await login.bunker(bunkerUri);
       onLogin();
       onClose();
+      navigate('/event');
       // Clear the URI from memory
       setBunkerUri('');
     } catch {

@@ -1,5 +1,4 @@
 import { useSeoMeta } from '@unhead/react';
-import { Link } from 'react-router-dom';
 import { SiteLayout } from '@/components/SiteLayout';
 
 const Program = () => {
@@ -229,14 +228,6 @@ const Program = () => {
             </div>
           </div>
 
-          <div className="pt-2">
-            <Link
-              to="/interest"
-              className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
-            >
-              Apply to Attend
-            </Link>
-          </div>
         </div>
       </article>
     </SiteLayout>

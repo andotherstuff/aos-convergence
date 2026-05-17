@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useLoginActions } from '@/hooks/useLoginActions';
-import { useEventDetails } from '@/hooks/useEventDetails';
 import { Button } from '@/components/ui/button';
 
 export function SiteHeader() {
@@ -10,9 +9,6 @@ export function SiteHeader() {
   const isHome = location.pathname === '/';
   const { currentUser } = useLoggedInAccounts();
   const { logout } = useLoginActions();
-  const isAdmin = location.pathname === '/admin';
-  const { data: eventData } = useEventDetails({ enabled: !isAdmin });
-  const isApproved = !!eventData;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Close mobile menu on route change
@@ -46,7 +42,6 @@ export function SiteHeader() {
             <NavLink to="/" active={isHome}>Home</NavLink>
             <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
             <NavLink to="/program" active={location.pathname === '/program'}>Program</NavLink>
-            {!isApproved && <NavLink to="/interest" active={location.pathname === '/interest'}>Apply</NavLink>}
             {currentUser && <NavLink to="/admin" active={location.pathname === '/admin'}>Admin</NavLink>}
             {currentUser && (
               <Button
@@ -88,7 +83,6 @@ export function SiteHeader() {
             <MobileNavLink to="/" active={isHome}>Home</MobileNavLink>
             <MobileNavLink to="/about" active={location.pathname === '/about'}>About</MobileNavLink>
             <MobileNavLink to="/program" active={location.pathname === '/program'}>Program</MobileNavLink>
-            {!isApproved && <MobileNavLink to="/interest" active={location.pathname === '/interest'}>Apply</MobileNavLink>}
             {currentUser && <MobileNavLink to="/admin" active={location.pathname === '/admin'}>Admin</MobileNavLink>}
             {currentUser && (
               <Button

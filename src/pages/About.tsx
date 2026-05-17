@@ -1,5 +1,4 @@
 import { useSeoMeta } from '@unhead/react';
-import { Link } from 'react-router-dom';
 import { SiteLayout } from '@/components/SiteLayout';
 
 const About = () => {
@@ -170,14 +169,6 @@ const About = () => {
           <p className="text-sm leading-relaxed text-muted-foreground">
             What matters most is active engagement with meaningful problems and a willingness to collaborate with others.
           </p>
-          <div className="pt-2">
-            <Link
-              to="/interest"
-              className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
-            >
-              Apply to Attend
-            </Link>
-          </div>
         </div>
         {/* FAQ */}
         <div className="space-y-3">
