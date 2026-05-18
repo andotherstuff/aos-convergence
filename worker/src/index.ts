@@ -264,7 +264,20 @@ function validateNip98(
 
   const urlTag = event.tags.find((t) => t[0] === 'u');
   if (!urlTag?.[1]) return 'Missing URL tag';
-  if (urlTag[1] !== request.url) return 'URL tag does not match request URL';
+  // Bind the token to the request path (not scheme/host). The API is served
+  // first-party via a Cloudflare [[routes]] pattern, so request.url's host
+  // legitimately differs from what the client signs (prod host vs localhost
+  // in dev, http vs https behind the edge). The replay protection that
+  // matters — endpoint + method + 60s window + signature — is preserved.
+  let tagPath: string;
+  let reqPath: string;
+  try {
+    tagPath = new URL(urlTag[1]).pathname;
+    reqPath = new URL(request.url).pathname;
+  } catch {
+    return 'Invalid URL tag';
+  }
+  if (tagPath !== reqPath) return 'URL tag does not match request URL';
 
   const methodTag = event.tags.find((t) => t[0] === 'method');
   if (!methodTag?.[1] || methodTag[1].toUpperCase() !== expectedMethod.toUpperCase()) {
@@ -386,6 +399,10 @@ export default {
 
     if (url.pathname === '/api/attendees' && request.method === 'GET') {
       return handleAttendeesRequest(request, env, headers);
+    }
+
+    if (url.pathname === '/api/hard-problems' && request.method === 'GET') {
+      return handleHardProblemsRequest(request, env, headers);
     }
 
     if (url.pathname === '/api/admin/approvals' && request.method === 'GET') {
@@ -641,6 +658,43 @@ async function handleAttendeesRequest(
   return jsonResponse({ attendees }, 200, headers);
 }
 
+// Synthesized, de-identified "Hard Problems" insights for Open Space —
+// derived from attendee applications, so it follows the same rule as the
+// project/attendee directories: it is NOT in this (public) repo. It lives
+// only in APPROVALS KV under `insights:hard-problems`, seeded out-of-band via
+// `npm run hard-problems:reload`, and is served only to approved attendees.
+const HARD_PROBLEMS_KV_KEY = 'insights:hard-problems';
+
+async function handleHardProblemsRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
+
+  const npub = nip19.npubEncode(verified.pubkey);
+  const approved = await isApprovedNpub(npub, env);
+
+  if (!approved) {
+    return jsonResponse({ error: 'Not on the approved attendee list', npub }, 403, headers);
+  }
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  const raw = await env.APPROVALS.get(HARD_PROBLEMS_KV_KEY);
+  if (!raw) {
+    return jsonResponse({ error: 'Hard Problems content is not seeded yet' }, 404, headers);
+  }
+
+  return new Response(raw, {
+    status: 200,
+    headers: { ...headers, 'Content-Type': 'application/json' },
+  });
+}
+
 async function handleListApprovalsRequest(
   request: Request,
   env: Env,
@@ -862,7 +916,7 @@ async function handleListApplications(
       return jsonResponse({ error: `Formspree API error: ${resp.status} ${text}` }, 502, headers);
     }
     formspreeData = await resp.json();
-  } catch (error) {
+  } catch {
     return jsonResponse({ error: 'Failed to fetch from Formspree' }, 502, headers);
   }
 

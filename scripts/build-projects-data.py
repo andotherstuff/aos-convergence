@@ -39,10 +39,66 @@ ICON_OVERRIDES = {
     "p_cc048afaf77e": "https://weboftrustfoundation.com",  # Web of Trust Foundation
 }
 
+# Per-project EXACT icon URL overrides (by stable id), applied last. Use when a
+# specific favicon URL is known-good and we don't want HTML/site resolution.
+ICON_URL_OVERRIDES = {
+    "p_8b8327841d9b": "https://proofmode.org/favicon.ico",  # Proofmode
+    "p_3697e5a313b2": "https://bffbtc.org/favicon.ico",  # Bitcoin for Fairness
+}
+
 # Per-project display-title overrides (by stable id), applied after enrichment.
 TITLE_OVERRIDES = {
     "p_42f17bbfc2d5": "Seattle Community Network",
     "p_f0172c42c700": "Vertex",
+    "p_8aede5875f39": "Hello.cv",
+    "p_dca2904e9a26": "Alexandria Gitcitadel",
+    "p_3697e5a313b2": "Bitcoin for Fairness",
+    "p_7b4ce7cbacb8": "SocialRoots",
+    "p_7b6865534ff8": "Open Collective",
+    "p_f1276b1ba6bd": "Blacksky Algorithms",
+}
+
+# Per-project description overrides (by stable id), applied after enrichment.
+# Curated, public-facing copy — overrides whatever OpenGraph scraping found.
+DESCRIPTION_OVERRIDES = {
+    "p_cae0ed801099": (
+        "Abrimos.info combines experience opening data with extensive "
+        "narrative, research and development capabilities to create reliable "
+        "and verified databases that promote strategic knowledge."
+    ),
+    "p_3697e5a313b2": (
+        "Bitcoin for Fairness is an initiative raising knowledge and "
+        "understanding of Bitcoin with a focus on civil and human rights."
+    ),
+    "p_6af0ced575e5": (
+        "Use AI to aggregate content, publish unstoppable stories on Nostr's "
+        "censorship-resistant relay network, and earn with Bitcoin Lightning "
+        "subscriptions."
+    ),
+    "p_7b6865534ff8": (
+        "Open Collective provides the infrastructure for effective financial "
+        "coordination. Enabling organizations, groups and communities to "
+        "build trust around money."
+    ),
+    "p_998382d06c16": "Web application for Cashu mint management.",
+    "p_f1276b1ba6bd": (
+        "Building the future of self-governable online communities with "
+        "tools that make complex infrastructure simple to deploy."
+    ),
+}
+
+# Per-project website-link overrides (by stable id). Replaces website[]
+# entirely, applied after enrichment.
+WEBSITE_OVERRIDES = {
+    "p_f1276b1ba6bd": ["https://blackskyweb.xyz"],  # Blacksky Algorithms
+}
+
+# Projects removed by the organizer (by stable id) — dropped from output.
+REMOVE_IDS = {
+    "p_f1f580aafdae",  # Andrea Diaz Correia - Open source developer
+    "p_66ba911503b0",  # techno-ethica · Wouter Constant
+    "p_4e9f57352a06",  # gaby-frei - Overview
+    "p_ad7d0547f2f9",  # Towards Liberty
 }
 URL_RE = re.compile(r"https?://[^\s,;]+", re.IGNORECASE)
 
@@ -298,8 +354,20 @@ def main() -> None:
     for p in projects:
         if p["id"] in ICON_OVERRIDES:
             p["icon"] = icon_override_cache[ICON_OVERRIDES[p["id"]]]
+        if p["id"] in ICON_URL_OVERRIDES:
+            p["icon"] = ICON_URL_OVERRIDES[p["id"]]
         if p["id"] in TITLE_OVERRIDES:
             p["title"] = TITLE_OVERRIDES[p["id"]]
+        if p["id"] in DESCRIPTION_OVERRIDES:
+            p["description"] = DESCRIPTION_OVERRIDES[p["id"]]
+        if p["id"] in WEBSITE_OVERRIDES:
+            p["website"] = list(WEBSITE_OVERRIDES[p["id"]])
+
+    removed = [p for p in projects if p["id"] in REMOVE_IDS]
+    projects = [p for p in projects if p["id"] not in REMOVE_IDS]
+    if removed:
+        print(f"removed {len(removed)} project(s) per REMOVE_IDS: "
+              + ", ".join(p["id"] for p in removed))
 
     projects = sorted(projects, key=lambda p: p["title"].lower())
     OUT.write_text(json.dumps(projects, ensure_ascii=False, indent=2), encoding="utf-8")

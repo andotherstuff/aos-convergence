@@ -102,8 +102,8 @@ export function ProjectCard({ item }: { item: Item }) {
   const description = item.description;
 
   return (
-    <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm flex flex-col gap-3">
-      <div className="flex items-start gap-3">
+    <div className="bg-card rounded-[18px] p-4 sm:p-5 border border-border shadow-sm flex flex-col gap-3 min-w-0 overflow-hidden">
+      <div className="flex items-start gap-3 min-w-0">
         <Avatar item={item} />
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-foreground leading-tight line-clamp-2 break-words">
@@ -116,7 +116,7 @@ export function ProjectCard({ item }: { item: Item }) {
       </div>
 
       {description && (
-        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
+        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3 break-words [overflow-wrap:anywhere]">
           {description}
         </p>
       )}
@@ -132,9 +132,9 @@ export function ProjectCard({ item }: { item: Item }) {
       )}
 
       {!isFoundry && item.suspectedDuplicateOf && (
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          Possible duplicate of Foundry project “{item.duplicateOfTitle}” — review.
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-start gap-1.5 min-w-0 break-words">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span className="min-w-0">Possible duplicate of Foundry project “{item.duplicateOfTitle}” — review.</span>
         </p>
       )}
 

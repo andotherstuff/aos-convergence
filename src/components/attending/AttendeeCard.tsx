@@ -53,8 +53,8 @@ export function AttendeeCard({ npub, saved, onToggleSave }: AttendeeCardProps) {
   };
 
   return (
-    <div className="bg-card rounded-[18px] p-5 border border-border shadow-sm flex flex-col gap-4">
-      <div className="flex items-start gap-3">
+    <div className="bg-card rounded-[18px] p-4 sm:p-5 border border-border shadow-sm flex flex-col gap-4 min-w-0 overflow-hidden">
+      <div className="flex items-start gap-3 min-w-0">
         <a
           href={dittoProfileUrl}
           target="_blank"
@@ -96,7 +96,7 @@ export function AttendeeCard({ npub, saved, onToggleSave }: AttendeeCardProps) {
       </div>
 
       {about && (
-        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
+        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3 break-words [overflow-wrap:anywhere]">
           {about}
         </p>
       )}

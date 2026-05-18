@@ -6,6 +6,7 @@ import About from "./pages/About";
 import Program from "./pages/Program";
 import EventDetails from "./pages/EventDetails";
 import Projects from "./pages/Projects";
+import HardProblems from "./pages/HardProblems";
 import Attending from "./pages/Attending";
 import Messages from "./pages/Messages";
 import AdminApprovals from "./pages/AdminApprovals";
@@ -28,6 +29,7 @@ export function AppRouter() {
         <Route path="/event" element={<EventDetails />} />
         <Route path="/attending" element={<Attending />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/hard-problems" element={<HardProblems />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/admin" element={<AdminApprovals />} />
         {/* NIP-19 route for npub1, note1, naddr1, nevent1, nprofile1 */}
