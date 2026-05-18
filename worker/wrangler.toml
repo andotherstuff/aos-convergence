@@ -6,6 +6,14 @@ compatibility_date = "2024-12-01"
 # `wrangler kv ... --remote` run non-interactively.
 account_id = "c84e7a9bf7ed99cb41b8e73566568c75"
 
+# Serve the API first-party at convergence.andotherstuff.org/api/* (same
+# origin as the site). Avoids *.workers.dev, which Brave Shields and other
+# content blockers block — and removes cross-origin/CORS entirely. The
+# workers.dev URL stays enabled as a fallback.
+[[routes]]
+pattern = "convergence.andotherstuff.org/api/*"
+zone_name = "andotherstuff.org"
+
 # APPROVALS KV stores approved npubs as keys: approved:<npub>
 [[kv_namespaces]]
 binding = "APPROVALS"
