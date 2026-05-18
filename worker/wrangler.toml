@@ -1,6 +1,10 @@
 name = "aos-convergence-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
+# Cloudflare account that owns this worker (the "Divine" account). Not a
+# secret — account IDs are safe to commit; this lets `wrangler deploy` and
+# `wrangler kv ... --remote` run non-interactively.
+account_id = "c84e7a9bf7ed99cb41b8e73566568c75"
 
 # APPROVALS KV stores approved npubs as keys: approved:<npub>
 [[kv_namespaces]]

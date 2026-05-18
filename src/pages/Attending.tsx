@@ -157,13 +157,13 @@ const Attending = () => {
               and log in with the Nostr account you created when you registered
               (a browser extension like{' '}
               <a
-                href="https://chromewebstore.google.com/detail/nnodjkgakfpkckcnbacpcjbpmlmbihdd"
+                href="https://chromewebstore.google.com/detail/ditto-extension/fbiegkepanmjielbemkhieckmlckiagi"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Install the Soapbox Signer browser extension (opens in a new tab)"
+                aria-label="Install the Ditto Extension browser extension (opens in a new tab)"
                 className="font-medium text-foreground underline underline-offset-2"
               >
-                Soapbox Signer
+                Ditto Extension
               </a>
               , or your secret key).
             </li>
