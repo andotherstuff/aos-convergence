@@ -126,10 +126,8 @@ const Attending = () => {
             Who's Attending
           </h1>
           <p className="text-base leading-relaxed text-muted-foreground">
-            {attendees.length} attendees chose to share their profile here—not
-            everyone coming is listed (and not everyone listed may end up being
-            able to make it). Follow them on Nostr, star the ones you want to
-            meet, and message them directly.
+            Follow them on Nostr, star the ones you want to meet, and message
+            them directly.
           </p>
         </div>
       </section>
