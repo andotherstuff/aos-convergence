@@ -42,6 +42,9 @@ export function SiteHeader() {
             <NavLink to="/" active={isHome}>Home</NavLink>
             <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
             <NavLink to="/program" active={location.pathname === '/program'}>Program</NavLink>
+            {currentUser && <NavLink to="/attending" active={location.pathname === '/attending'}>Who's Attending</NavLink>}
+            {currentUser && <NavLink to="/projects" active={location.pathname === '/projects'}>Projects</NavLink>}
+            {currentUser && <NavLink to="/messages" active={location.pathname === '/messages'}>Messages</NavLink>}
             {currentUser && <NavLink to="/admin" active={location.pathname === '/admin'}>Admin</NavLink>}
             {currentUser && (
               <Button
@@ -83,6 +86,9 @@ export function SiteHeader() {
             <MobileNavLink to="/" active={isHome}>Home</MobileNavLink>
             <MobileNavLink to="/about" active={location.pathname === '/about'}>About</MobileNavLink>
             <MobileNavLink to="/program" active={location.pathname === '/program'}>Program</MobileNavLink>
+            {currentUser && <MobileNavLink to="/attending" active={location.pathname === '/attending'}>Who's Attending</MobileNavLink>}
+            {currentUser && <MobileNavLink to="/projects" active={location.pathname === '/projects'}>Projects</MobileNavLink>}
+            {currentUser && <MobileNavLink to="/messages" active={location.pathname === '/messages'}>Messages</MobileNavLink>}
             {currentUser && <MobileNavLink to="/admin" active={location.pathname === '/admin'}>Admin</MobileNavLink>}
             {currentUser && (
               <Button

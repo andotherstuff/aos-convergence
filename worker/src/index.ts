@@ -1,4 +1,5 @@
 import { verifyEvent, nip19 } from 'nostr-tools';
+import { FOUNDRY_PROJECTS } from './foundryProjects';
 
 interface Env {
   APPROVALS?: KVNamespace;
@@ -379,6 +380,14 @@ export default {
       return handleEventRequest(request, env, headers);
     }
 
+    if (url.pathname === '/api/projects' && request.method === 'GET') {
+      return handleProjectsRequest(request, env, headers);
+    }
+
+    if (url.pathname === '/api/attendees' && request.method === 'GET') {
+      return handleAttendeesRequest(request, env, headers);
+    }
+
     if (url.pathname === '/api/admin/approvals' && request.method === 'GET') {
       return handleListApprovalsRequest(request, env, headers);
     }
@@ -423,6 +432,213 @@ async function handleEventRequest(
   }
 
   return jsonResponse(getEventDetails(env.SIGNAL_GROUP_LINK), 200, headers);
+}
+
+// Attendee project directory — same approved-attendee gate as /api/event.
+//
+// The dataset is PERSONAL attendee data and is intentionally NOT in this
+// (public) repo. It lives only in the APPROVALS KV under `projects:directory`,
+// populated out-of-band via `scripts/build-projects-data.py` +
+// `wrangler kv key put`. It is served only to approved attendees and never
+// reaches the public frontend bundle.
+const PROJECTS_KV_KEY = 'projects:directory';
+const ATTENDEES_KV_KEY = 'attendees:directory';
+
+interface AttendeeProject {
+  id: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  website: string[];
+  github: string[];
+  other: string[];
+  source: 'attendee';
+  suspectedDuplicateOf?: string;
+  duplicateOfTitle?: string;
+}
+
+// Shared platforms whose bare host says nothing about project identity — a
+// host match here would be a false positive, so we never key on them.
+const GENERIC_HOSTS = [
+  'x.com', 'twitter.com', 'linkedin.com', 't.me', 'bsky.app', 'mastodon.social',
+  'medium.com', 'substack.com', 'docsend.com', 'drive.proton.me', 'youtube.com',
+  'opencollective.com', 'vercel.app', 'netlify.app', 'pages.dev', 'github.io',
+  'nsite.run', 'gist.github.com', 'notion.site', 'squarespace.com',
+];
+
+/**
+ * Normalised identity keys for a URL. For code hosts we key on the
+ * `owner/repo` slug (not the bare host); for everything else we key on the
+ * project's own hostname, skipping generic shared platforms.
+ */
+function urlKeys(url: string): string[] {
+  const m = /^https?:\/\/([^/]+)(\/[^?#]*)?/i.exec(url);
+  if (!m) return [];
+  const host = m[1].replace(/^www\./i, '').toLowerCase();
+  const path = (m[2] || '').replace(/\/+$/, '');
+
+  if (host === 'github.com' || host === 'gitlab.com') {
+    const slug = path.split('/').filter(Boolean).slice(0, 2).join('/');
+    return slug ? [`${host === 'github.com' ? 'gh' : 'gl'}:${slug.toLowerCase()}`] : [];
+  }
+  if (GENERIC_HOSTS.some((g) => host === g || host.endsWith('.' + g))) {
+    return [];
+  }
+  return [host];
+}
+
+/**
+ * Flags attendee projects that look like an existing Foundry project (shared
+ * site host or github owner/repo). Both are kept — the flag is advisory so a
+ * human can review, never an automatic merge.
+ */
+function flagDuplicates(attendee: AttendeeProject[]): AttendeeProject[] {
+  const foundryIndex = new Map<string, { id: string; title: string }>();
+  for (const f of FOUNDRY_PROJECTS) {
+    for (const u of [f.site, f.repo]) {
+      for (const k of urlKeys(u)) foundryIndex.set(k, { id: f.id, title: f.title });
+    }
+  }
+  return attendee.map((p) => {
+    if (NOT_DUPLICATE_PROJECT_IDS.has(p.id)) return p;
+    for (const u of [...p.website, ...p.github, ...p.other]) {
+      for (const k of urlKeys(u)) {
+        const hit = foundryIndex.get(k);
+        if (hit) {
+          return { ...p, suspectedDuplicateOf: hit.id, duplicateOfTitle: hit.title };
+        }
+      }
+    }
+    return p;
+  });
+}
+
+// Foundry ids whose attendee duplicates have been human-reviewed and confirmed
+// as dupes — these attendee cards are dropped, not just badged. Add a foundry
+// id here when an organizer says "that's a dupe, remove it".
+const CONFIRMED_FOUNDRY_DUPES = new Set<string>([
+  'foundry-agora',
+  'foundry-bitchat',
+]);
+
+// More precise removals: drop a specific attendee project by its (stable,
+// link-derived) id. Used when only SOME projects flagged against a Foundry
+// project are real dupes — e.g. `divine.video` is the Divine submission, but
+// `proofmode.org` merely links divine.video and is a distinct project.
+const CONFIRMED_DUPLICATE_PROJECT_IDS = new Set<string>([
+  'p_a050d2b406eb', // divine.video — dupe of Foundry "Divine"
+  'p_69ac3917bd8d', // github.com/alexgleason
+  'p_39d1384c91d5', // github.com/andotherstuff
+  'p_17f7b29fd54b', // github.com/callebtc
+  'p_5d6c68d45d07', // github.com/erskingardner
+  'p_94683f389cd8', // github.com/marykatefain
+  'p_9239c1c4c9f8', // gitworkshop.dev
+  'p_912ec40bff57', // psacramento.com
+  'p_d7bff0a4f2ff', // shakespeare.diy
+  'p_7ebb25e1a74b', // zapstore.dev
+  'p_954d07c4c6b3', // soapbox.pub (lemonknowsall)
+  'p_b43e02520476', // soapbox.pub (groups/soapbox-pub)
+  'p_bc79e2ded67f', // soapbox.pub/ditto
+  'p_9d9eb6a19b5d', // linkedin-only (fiorellaiannuzzelli)
+  'p_1305cf77a984', // linkedin-only (maxwell-degregorio)
+  'p_341741e85d23', // linkedin-titled (amit-motwani) — removed per organizer
+  'p_8f6eee0441f6', // npub…nsite.run (sandwichfarm) — removed per organizer
+  'p_e19fcdf7b9fc', // cashudevkit.org (thesimplekid) — removed per organizer
+  'p_c1716e823ebe', // Alexander Hansen Færøy (ahf.me)
+  'p_dd91bb3eecb2', // Derek Ross (derekross.me)
+  'p_e030d1d53648', // Erik Cativo (erik.day)
+  'p_dd49714eeced', // gaby-frei
+  'p_cffe1d0624e0', // Sondre Bjellås (sondreb.com)
+  'p_1e8164c20855', // nathan day (nathan.day.ag)
+  'p_79bcfa75a64f', // hzrd149 (hzrd149.com)
+  'p_871b1eb81ac9', // J.G. Montoya (blog.jgmontoya.com)
+  'p_69ccd48f3eae', // Josefinalliende
+  'p_f1afbf8e4ba9', // Mattlorentz (mattlorentz.com)
+  'p_c95dc76c6945', // Xavier Damman (xavierdamman.com)
+  'p_bdab2286ca19', // Paul (paulinthejungle.com)
+]);
+
+// Attendee projects human-reviewed as NOT duplicates — never carry the
+// advisory badge even if a URL coincidentally matches a Foundry project.
+const NOT_DUPLICATE_PROJECT_IDS = new Set<string>([
+  'p_8b8327841d9b', // proofmode.org — distinct (Guardian Project; merely links divine.video)
+]);
+
+async function handleProjectsRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
+
+  const npub = nip19.npubEncode(verified.pubkey);
+  const approved = await isApprovedNpub(npub, env);
+
+  if (!approved) {
+    return jsonResponse({ error: 'Not on the approved attendee list', npub }, 403, headers);
+  }
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  const raw = await env.APPROVALS.get(PROJECTS_KV_KEY);
+  const attendeeProjects: AttendeeProject[] = raw ? JSON.parse(raw) : [];
+  const flagged = flagDuplicates(attendeeProjects);
+
+  // Drop confirmed dupes entirely; keep the rest (unconfirmed flags stay
+  // advisory and still render with a review badge).
+  const projects = flagged.filter(
+    (p) =>
+      !CONFIRMED_DUPLICATE_PROJECT_IDS.has(p.id) &&
+      !(p.suspectedDuplicateOf && CONFIRMED_FOUNDRY_DUPES.has(p.suspectedDuplicateOf)) &&
+      // Drop low-signal cards whose only link is GitHub (no website / other).
+      // Structural check, not title-based: enrichment rewrites titles.
+      !(p.website.length === 0 && p.other.length === 0 && p.github.length > 0),
+  );
+
+  const foundry = [...FOUNDRY_PROJECTS].sort((a, b) =>
+    a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }),
+  );
+
+  return jsonResponse(
+    {
+      projects,
+      foundry,
+      suspectedDuplicates: projects.filter((p) => p.suspectedDuplicateOf).length,
+      removedDuplicates: flagged.length - projects.length,
+    },
+    200,
+    headers,
+  );
+}
+
+// Attendee directory (npubs only) — same approved-attendee gate. Personal
+// data: KV-only, never committed. Names/avatars resolved client-side.
+async function handleAttendeesRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
+
+  const npub = nip19.npubEncode(verified.pubkey);
+  const approved = await isApprovedNpub(npub, env);
+
+  if (!approved) {
+    return jsonResponse({ error: 'Not on the approved attendee list', npub }, 403, headers);
+  }
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  const raw = await env.APPROVALS.get(ATTENDEES_KV_KEY);
+  const attendees = raw ? JSON.parse(raw) : [];
+
+  return jsonResponse({ attendees }, 200, headers);
 }
 
 async function handleListApprovalsRequest(

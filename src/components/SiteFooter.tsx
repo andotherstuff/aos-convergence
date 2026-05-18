@@ -24,6 +24,9 @@ export function SiteFooter() {
             <Link to="/" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Home</Link>
             <Link to="/about" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">About</Link>
             <Link to="/program" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Program</Link>
+            {currentUser && <Link to="/attending" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Who's Attending</Link>}
+            {currentUser && <Link to="/projects" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Projects</Link>}
+            {currentUser && <Link to="/messages" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Messages</Link>}
             {currentUser && <Link to="/admin" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">Admin</Link>}
             <a href="https://andotherstuff.org" target="_blank" rel="noopener noreferrer" className="text-[#716f6a] hover:text-[#0f100f] no-underline transition-colors">
               andotherstuff.org

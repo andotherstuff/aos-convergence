@@ -14,6 +14,7 @@ const Landing = () => {
   const navigate = useNavigate();
   const { data: eventData, error: eventError, isLoading: eventLoading } = useEventDetails();
   const [nsec, setNsec] = useState('');
+  const [bunkerUri, setBunkerUri] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +65,27 @@ const Landing = () => {
       navigate('/event');
     } catch {
       setError('Invalid secret key.');
+      setLoading(false);
+    }
+  };
+
+  const handleBunkerLogin = async () => {
+    setError('');
+    const trimmed = bunkerUri.trim();
+    if (!trimmed) {
+      setError('Please paste your bunker:// connection string');
+      return;
+    }
+    if (!trimmed.startsWith('bunker://')) {
+      setError('Invalid format. A NIP-46 connection string starts with bunker://');
+      return;
+    }
+    setLoading(true);
+    try {
+      await login.bunker(trimmed);
+      navigate('/event');
+    } catch (e) {
+      setError((e as Error).message || 'Remote signer login failed');
       setLoading(false);
     }
   };
@@ -149,6 +171,31 @@ const Landing = () => {
                       className="w-full h-12 rounded-xl"
                     >
                       Log in
+                    </Button>
+                  </form>
+
+                  <div className="relative flex items-center gap-4">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground">or use a remote signer</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  <form onSubmit={(e) => { e.preventDefault(); handleBunkerLogin(); }} className="space-y-3">
+                    <Input
+                      type="password"
+                      value={bunkerUri}
+                      onChange={(e) => { setBunkerUri(e.target.value); setError(''); }}
+                      placeholder="bunker://..."
+                      className="h-12 rounded-xl"
+                      autoComplete="off"
+                    />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      disabled={loading || !bunkerUri.trim()}
+                      className="w-full h-12 rounded-xl"
+                    >
+                      {loading ? 'Connecting…' : 'Connect remote signer (NIP-46)'}
                     </Button>
                   </form>
 

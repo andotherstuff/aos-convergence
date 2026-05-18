@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, Send, Loader2, AlertTriangle, Key, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, Key, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NoteContent } from '@/components/NoteContent';
 import type { NostrEvent } from '@nostrify/nostrify';
@@ -43,7 +43,6 @@ const MessageBubble = memo(({
 }) => {
   // For NIP-17, use inner message kind (14/15); for NIP-04, use message kind (4)
   const actualKind = message.decryptedEvent?.kind || message.kind;
-  const isNIP4Message = message.kind === 4;
   const isFileAttachment = actualKind === 15; // Kind 15 = files/attachments
 
   // Create a NostrEvent object for NoteContent (only used for kind 15)
@@ -127,20 +126,6 @@ const MessageBubble = memo(({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {isNIP4Message && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex-shrink-0">
-                    <AlertTriangle className="h-3 w-3 text-yellow-600 dark:text-yellow-500" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Uses outdated NIP-04 encryption</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
           {message.isSending && (
             <Loader2 className="h-3 w-3 animate-spin opacity-70" />
           )}
@@ -202,7 +187,7 @@ const EmptyState = ({ isLoading }: { isLoading: boolean }) => {
           </>
         ) : (
           <>
-            <p className="text-sm">Select a conversation to start messaging</p>
+            <p className="text-sm">Pick a conversation, or hit “New message” to start one</p>
             <p className="text-xs mt-2">
               Your messages are encrypted and stored locally
             </p>
@@ -384,23 +369,24 @@ export const DMChatArea = ({ pubkey, onBack, className }: DMChatAreaProps) => {
                 <Send className="h-5 w-5" />
               )}
             </Button>
-            <Select
-              value={selectedProtocol}
-              onValueChange={(value) => setSelectedProtocol(value as MessageProtocol)}
-              disabled={!allowSelection}
-            >
-              <SelectTrigger className="h-[32px] w-[90px] text-base md:text-xs px-2">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={MESSAGE_PROTOCOL.NIP17} className="text-base md:text-xs">
-                  NIP-17
-                </SelectItem>
-                <SelectItem value={MESSAGE_PROTOCOL.NIP04} className="text-base md:text-xs">
-                  NIP-04
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            {allowSelection && (
+              <Select
+                value={selectedProtocol}
+                onValueChange={(value) => setSelectedProtocol(value as MessageProtocol)}
+              >
+                <SelectTrigger className="h-[32px] w-[90px] text-base md:text-xs px-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={MESSAGE_PROTOCOL.NIP17} className="text-base md:text-xs">
+                    NIP-17
+                  </SelectItem>
+                  <SelectItem value={MESSAGE_PROTOCOL.NIP04} className="text-base md:text-xs">
+                    NIP-04
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
       </div>

@@ -33,3 +33,7 @@ yarn.lock
 !.env.example
 worker/.wrangler/
 worker/approved_npubs.txt
+# Personal attendee data — KV-only, never commit (public repo).
+worker/projects-data.local.json
+worker/attendees-data.local.json
+worker/src/projectsData.ts

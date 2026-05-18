@@ -1,5 +1,5 @@
 import { useSeoMeta } from '@unhead/react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SiteLayout } from '@/components/SiteLayout';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useEventDetails } from '@/hooks/useEventDetails';
@@ -104,15 +104,23 @@ const EventDetails = () => {
           <p className="text-base leading-relaxed text-muted-foreground mb-5">
             You're confirmed. Three days of Open Space, hackathon, and collaboration — here's everything you need.
           </p>
-          <a
-            href={data.signalGroupLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
-          >
-            Join the Signal Group
-          </a>
-          <p className="text-xs text-muted-foreground mt-2">All event coordination happens here</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href={data.signalGroupLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-6 py-3 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
+            >
+              Join the Signal Group
+            </a>
+            <Link
+              to="/attending"
+              className="inline-flex items-center px-6 py-3 rounded-full border border-foreground/15 text-sm font-medium text-foreground hover:bg-foreground/[0.04] transition-colors"
+            >
+              See who's attending →
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">All event coordination happens in Signal</p>
         </div>
       </section>
 
