@@ -1,11 +1,14 @@
 # Cloudflare Pages headers.
-# HTML must never be reused from cache/bfcache, so a soft refresh always
+# HTML must never be reused from cache/bfcache so a soft refresh always
 # fetches the index.html that references the latest hashed JS bundle (a stale
 # bundle points at the old *.workers.dev API, which Brave/blockers block).
-# Hashed /assets/* are content-addressed, so cache them hard.
+#
+# Cloudflare Pages COMBINES (does not override) Cache-Control across matching
+# rules, so a scoped /assets/* immutable rule would merge with the /* rule
+# into a contradictory "no-store, immutable" header. We therefore keep one
+# unambiguous global rule. Hashed asset filenames change per build, so
+# no-store is safe (just not maximally cache-efficient); revisit later if
+# repeat-load performance ever matters.
 
 /*
   Cache-Control: no-store
-
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
