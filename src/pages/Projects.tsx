@@ -11,6 +11,12 @@ import {
   type FoundryProject,
 } from '@/hooks/useProjectDirectory';
 import { ProjectCard } from '@/components/projects/ProjectCard';
+import { ProjectStagesGraphic } from '@/components/projects/ProjectStagesGraphic';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -128,6 +134,26 @@ const Projects = () => {
           <p className="text-base leading-relaxed text-muted-foreground">
             What attendees and the AOS Foundry are building.
           </p>
+          <div className="mt-5 flex justify-center">
+            <HoverCard openDelay={100} closeDelay={80}>
+              <HoverCardTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-foreground/[0.04]"
+                >
+                  <span className="text-base leading-none">🚀</span>
+                  How far along is everything?
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent
+                align="center"
+                sideOffset={10}
+                className="w-auto rounded-[18px] p-5"
+              >
+                <ProjectStagesGraphic />
+              </HoverCardContent>
+            </HoverCard>
+          </div>
         </div>
       </section>
 
