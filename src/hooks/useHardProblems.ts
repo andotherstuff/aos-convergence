@@ -10,6 +10,7 @@ export interface HardProblemSubsection {
 
 export interface HardProblemSection {
   heading: string;
+  tags?: string[];
   body: string[];
   subsections?: HardProblemSubsection[];
 }

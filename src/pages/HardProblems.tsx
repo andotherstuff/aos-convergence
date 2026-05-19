@@ -10,6 +10,22 @@ import { Button } from '@/components/ui/button';
 import { SharedValuesGraphic } from '@/components/hard-problems/SharedValuesGraphic';
 import { HoverOrTapCard } from '@/components/ui/hover-or-tap-card';
 
+const TAG_COLORS: Record<string, { bg: string; text: string }> = {
+  UX:               { bg: '#dbeafe', text: '#1e3a8a' },
+  Adoption:         { bg: '#fef3c7', text: '#78350f' },
+  Decentralization: { bg: '#ede9fe', text: '#4c1d95' },
+  Resilience:       { bg: '#dcfce7', text: '#14532d' },
+  Legal:            { bg: '#fee2e2', text: '#7f1d1d' },
+  Trust:            { bg: '#e0e7ff', text: '#312e81' },
+  Identity:         { bg: '#fce7f3', text: '#831843' },
+  Governance:       { bg: '#fef9c3', text: '#713f12' },
+  Funding:          { bg: '#cffafe', text: '#164e63' },
+  Community:        { bg: '#ccfbf1', text: '#134e4a' },
+  Privacy:          { bg: '#f1f5f9', text: '#1e293b' },
+  'Open Source':    { bg: '#d1fae5', text: '#064e3b' },
+  AI:               { bg: '#f3e8ff', text: '#581c87' },
+};
+
 const HardProblems = () => {
   const { user } = useCurrentUser();
   const { logout } = useLoginActions();
@@ -124,6 +140,22 @@ const HardProblems = () => {
               <h2 className="text-[1.35rem] md:text-[1.55rem] font-semibold tracking-[-0.02em] text-foreground mb-2">
                 {section.heading}
               </h2>
+              {section.tags && section.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {section.tags.map((tag) => {
+                    const colors = TAG_COLORS[tag] ?? { bg: '#f1f5f9', text: '#334155' };
+                    return (
+                      <span
+                        key={tag}
+                        style={{ backgroundColor: colors.bg, color: colors.text }}
+                        className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                      >
+                        {tag}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               <div className="space-y-2.5 text-[0.98rem] leading-[1.6] text-[#3f3e3a]">
                 {section.body.map((para, i) => (
                   <p key={i}>{para}</p>
