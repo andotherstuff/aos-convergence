@@ -1,6 +1,6 @@
 import { useSeoMeta } from '@unhead/react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { nip19 } from 'nostr-tools';
 import { SiteLayout } from '@/components/SiteLayout';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { SharedValuesGraphic } from '@/components/hard-problems/SharedValuesGraphic';
 import { HoverOrTapCard } from '@/components/ui/hover-or-tap-card';
 
+// Background and text color per tag — used in both the filter bar and card pills
 const TAG_COLORS: Record<string, { bg: string; text: string }> = {
   UX:               { bg: '#dbeafe', text: '#1e3a8a' },
   Adoption:         { bg: '#fef3c7', text: '#78350f' },
@@ -31,6 +32,32 @@ const HardProblems = () => {
   const { logout } = useLoginActions();
   const navigate = useNavigate();
   const { data, isLoading, error } = useHardProblems();
+  // Tags currently selected in the filter bar
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+
+  // Tags that actually appear in the data, ordered by TAG_COLORS
+  const allTags = useMemo(() => {
+    if (!data) return [];
+    const seen = new Set<string>();
+    data.sections.forEach(s => s.tags?.forEach(t => seen.add(t)));
+    return Object.keys(TAG_COLORS).filter(t => seen.has(t));
+  }, [data]);
+
+  // OR logic: show a card if it has any active tag; show all when nothing is selected
+  const filteredSections = useMemo(() => {
+    if (!data) return [];
+    if (activeTags.size === 0) return data.sections;
+    return data.sections.filter(s => s.tags?.some(t => activeTags.has(t)));
+  }, [data, activeTags]);
+
+  const toggleTag = (tag: string) => {
+    setActiveTags(prev => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+  };
 
   useSeoMeta({
     title: 'Hard Problems — AOS Convergence Oslo',
@@ -134,21 +161,62 @@ const HardProblems = () => {
       </section>
 
       <div className="max-w-[720px] mx-auto px-6 py-10 md:py-12">
-        <div className="space-y-8">
-          {data.sections.map((section) => (
-            <article key={section.heading}>
-              <h2 className="text-[1.35rem] md:text-[1.55rem] font-semibold tracking-[-0.02em] text-foreground mb-2">
+        {/* Filter bar — active pill gets an outline; inactive pills fade when a filter is set */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {allTags.map((tag) => {
+            const colors = TAG_COLORS[tag] ?? { bg: '#f1f5f9', text: '#334155' };
+            const isActive = activeTags.has(tag);
+            const hasFilter = activeTags.size > 0;
+            return (
+              <button
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                style={{
+                  backgroundColor: colors.bg,
+                  color: colors.text,
+                  outline: isActive ? `2px solid ${colors.text}` : 'none',
+                  outlineOffset: '2px',
+                  opacity: hasFilter && !isActive ? 0.35 : 1,
+                }}
+                className="rounded-full px-3 py-1 text-xs font-medium shadow-sm transition-opacity duration-150 cursor-pointer"
+              >
+                {tag}
+              </button>
+            );
+          })}
+          {activeTags.size > 0 && (
+            <button
+              onClick={() => setActiveTags(new Set())}
+              className="rounded-full px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          {filteredSections.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-10">
+              No problems match the selected tags.
+            </p>
+          ) : null}
+          {filteredSections.map((section) => (
+            <article
+              key={section.heading}
+              className="bg-card rounded-[18px] p-4 sm:p-5 border border-border shadow-sm flex flex-col gap-3 min-w-0 overflow-hidden"
+            >
+              <h2 className="text-[1.35rem] md:text-[1.55rem] font-semibold tracking-[-0.02em] text-foreground">
                 {section.heading}
               </h2>
               {section.tags && section.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
+                <div className="flex flex-wrap gap-1.5">
                   {section.tags.map((tag) => {
                     const colors = TAG_COLORS[tag] ?? { bg: '#f1f5f9', text: '#334155' };
                     return (
                       <span
                         key={tag}
                         style={{ backgroundColor: colors.bg, color: colors.text }}
-                        className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                        className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm"
                       >
                         {tag}
                       </span>
@@ -163,7 +231,7 @@ const HardProblems = () => {
               </div>
 
               {section.subsections && section.subsections.length > 0 && (
-                <div className="mt-5 space-y-5 border-l-2 border-[rgba(222,219,213,0.9)] pl-6">
+                <div className="space-y-5 border-l-2 border-[rgba(222,219,213,0.9)] pl-6">
                   {section.subsections.map((sub) => (
                     <div key={sub.heading}>
                       <h3 className="text-[1.1rem] font-semibold tracking-[-0.01em] text-foreground mb-2">
