@@ -33,7 +33,7 @@ export function AttendeeOriginsGraphic() {
   const nostrverse = stats.countries.find((c) => c.continent === 'Nostrverse');
 
   return (
-    <div className="w-[380px] sm:w-[440px]">
+    <div className="w-full">
       <div className="flex items-baseline gap-2">
         <span className="text-3xl font-semibold tracking-[-0.03em] text-foreground tabular-nums">
           {stats.total}

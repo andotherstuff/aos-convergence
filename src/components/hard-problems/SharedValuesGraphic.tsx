@@ -42,7 +42,7 @@ export function SharedValuesGraphic() {
   const maxCount = stats.values[0]?.count ?? 1;
 
   return (
-    <div className="w-[380px] sm:w-[440px]">
+    <div className="w-full">
       <div>
         <h3 className="text-lg font-semibold tracking-[-0.02em] text-foreground">
           What brings us together

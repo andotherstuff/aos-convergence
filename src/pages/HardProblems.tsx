@@ -8,11 +8,7 @@ import { useLoginActions } from '@/hooks/useLoginActions';
 import { useHardProblems } from '@/hooks/useHardProblems';
 import { Button } from '@/components/ui/button';
 import { SharedValuesGraphic } from '@/components/hard-problems/SharedValuesGraphic';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
+import { HoverOrTapCard } from '@/components/ui/hover-or-tap-card';
 
 const HardProblems = () => {
   const { user } = useCurrentUser();
@@ -103,8 +99,9 @@ const HardProblems = () => {
             {data.intro}
           </p>
           <div className="mt-5 flex justify-center">
-            <HoverCard openDelay={100} closeDelay={80}>
-              <HoverCardTrigger asChild>
+            <HoverOrTapCard
+              contentClassName="w-[min(440px,calc(100vw-24px))] p-5"
+              trigger={
                 <button
                   type="button"
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-foreground/[0.04]"
@@ -112,15 +109,10 @@ const HardProblems = () => {
                   <span className="text-base leading-none">🧭</span>
                   What brings us together?
                 </button>
-              </HoverCardTrigger>
-              <HoverCardContent
-                align="center"
-                sideOffset={10}
-                className="w-auto rounded-[18px] p-5"
-              >
-                <SharedValuesGraphic />
-              </HoverCardContent>
-            </HoverCard>
+              }
+            >
+              <SharedValuesGraphic />
+            </HoverOrTapCard>
           </div>
         </div>
       </section>

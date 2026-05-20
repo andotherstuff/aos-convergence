@@ -12,11 +12,7 @@ import { useProfileSearchIndex } from '@/hooks/useProfileSearchIndex';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { AttendeeCard } from '@/components/attending/AttendeeCard';
 import { AttendeeOriginsGraphic } from '@/components/attending/AttendeeOriginsGraphic';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
+import { HoverOrTapCard } from '@/components/ui/hover-or-tap-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -136,8 +132,9 @@ const Attending = () => {
             them directly.
           </p>
           <div className="mt-5 flex justify-center">
-            <HoverCard openDelay={100} closeDelay={80}>
-              <HoverCardTrigger asChild>
+            <HoverOrTapCard
+              contentClassName="w-[min(440px,calc(100vw-24px))] p-5"
+              trigger={
                 <button
                   type="button"
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-foreground/[0.04]"
@@ -145,15 +142,10 @@ const Attending = () => {
                   <span className="text-base leading-none">🌍</span>
                   Where's everyone coming from?
                 </button>
-              </HoverCardTrigger>
-              <HoverCardContent
-                align="center"
-                sideOffset={10}
-                className="w-auto rounded-[18px] p-5"
-              >
-                <AttendeeOriginsGraphic />
-              </HoverCardContent>
-            </HoverCard>
+              }
+            >
+              <AttendeeOriginsGraphic />
+            </HoverOrTapCard>
           </div>
         </div>
       </section>
