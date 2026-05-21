@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useLoginActions } from '@/hooks/useLoginActions';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useNavigate } from 'react-router-dom';
+import { formatExtensionLoginError, hasNostrExtension } from '@/lib/nostrExtension';
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -63,9 +64,6 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) =
     setErrors(prev => ({ ...prev, extension: undefined }));
 
     try {
-      if (!('nostr' in window)) {
-        throw new Error('Nostr extension not found. Please install a NIP-07 extension.');
-      }
       await login.extension();
       onLogin();
       onClose();
@@ -77,7 +75,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) =
       console.error('Extension login failed:', error);
       setErrors(prev => ({
         ...prev,
-        extension: error instanceof Error ? error.message : 'Extension login failed'
+        extension: formatExtensionLoginError(error)
       }));
     } finally {
       setIsLoading(false);
@@ -175,7 +173,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) =
     reader.readAsText(file);
   };
 
-  const hasExtension = 'nostr' in window;
+  const signerDetected = hasNostrExtension();
   const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
 
   const renderTabs = () => (
@@ -300,42 +298,39 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin }) =
         </div>
 
         <div className='px-6 pb-6 space-y-4 overflow-y-auto'>
-          {/* Extension Login Button - shown if extension is available */}
-          {hasExtension && (
-            <div className="space-y-4">
-              {errors.extension && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{errors.extension}</AlertDescription>
-                </Alert>
-              )}
-              <Button
-                className="w-full h-12 px-9"
-                onClick={handleExtensionLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Logging in...' : 'Log in with Extension'}
-              </Button>
-            </div>
-          )}
+          <div className="space-y-4">
+            {errors.extension && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{errors.extension}</AlertDescription>
+              </Alert>
+            )}
+            <Button
+              className="w-full h-12 px-9"
+              onClick={handleExtensionLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Logging in...' : 'Log in with Signer / Extension'}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              {signerDetected
+                ? 'Signer detected in this browser.'
+                : 'Works with NIP-07 signers such as Soapbox Signer. On Android, Amber works best through the remote signer option below.'}
+            </p>
+          </div>
 
-          {/* Tabs - wrapped in collapsible if extension is available, otherwise shown directly */}
-          {hasExtension ? (
-            <Collapsible className="space-y-4" open={isMoreOptionsOpen} onOpenChange={setIsMoreOptionsOpen}>
-              <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  <span>More Options</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isMoreOptionsOpen ? 'rotate-180' : ''}`} />
-                </button>
-              </CollapsibleTrigger>
+          <Collapsible className="space-y-4" open={isMoreOptionsOpen} onOpenChange={setIsMoreOptionsOpen}>
+            <CollapsibleTrigger asChild>
+              <button className="w-full flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <span>More Options</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isMoreOptionsOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </CollapsibleTrigger>
 
-              <CollapsibleContent>
-                {renderTabs()}
-              </CollapsibleContent>
-            </Collapsible>
-          ) : (
-            renderTabs()
-          )}
+            <CollapsibleContent>
+              {renderTabs()}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </DialogContent>
     </Dialog>

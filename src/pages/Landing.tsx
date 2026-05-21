@@ -7,6 +7,7 @@ import { useLoginActions } from '@/hooks/useLoginActions';
 import { useEventDetails } from '@/hooks/useEventDetails';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { formatExtensionLoginError, hasNostrExtension } from '@/lib/nostrExtension';
 
 const Landing = () => {
   const { currentUser } = useLoggedInAccounts();
@@ -17,6 +18,7 @@ const Landing = () => {
   const [bunkerUri, setBunkerUri] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const signerDetected = hasNostrExtension();
 
   const isNotApproved = currentUser && !eventLoading && eventError?.message === 'NOT_APPROVED';
 
@@ -36,13 +38,10 @@ const Landing = () => {
     setLoading(true);
     setError('');
     try {
-      if (!('nostr' in window)) {
-        throw new Error('No Nostr extension found. Install a NIP-07 extension (nos2x, Alby, etc.).');
-      }
       await login.extension();
       navigate('/event');
     } catch (e) {
-      setError((e as Error).message || 'Extension login failed');
+      setError(formatExtensionLoginError(e));
     } finally {
       setLoading(false);
     }
@@ -146,8 +145,14 @@ const Landing = () => {
                     disabled={loading}
                     className="w-full h-12 rounded-xl bg-foreground text-background hover:bg-foreground/90"
                   >
-                    {loading ? 'Connecting...' : 'Log in with Extension (NIP-07)'}
+                    {loading ? 'Connecting...' : 'Log in with Signer / Extension'}
                   </Button>
+
+                  <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                    {signerDetected
+                      ? 'Signer detected in this browser.'
+                      : 'Use this for NIP-07 signers such as Soapbox Signer. Amber on Android should use the remote signer flow below.'}
+                  </p>
 
                   <div className="relative flex items-center gap-4">
                     <div className="flex-1 h-px bg-border" />
@@ -198,6 +203,10 @@ const Landing = () => {
                       {loading ? 'Connecting…' : 'Connect remote signer (NIP-46)'}
                     </Button>
                   </form>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Amber users: in Amber, start a Nostr Connect or bunker session and paste the resulting <code>bunker://</code> URI here.
+                  </p>
 
                   {error && (
                     <p className="text-sm text-red-600">{error}</p>

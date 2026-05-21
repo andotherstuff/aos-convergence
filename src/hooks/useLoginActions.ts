@@ -1,5 +1,6 @@
 import { useNostr } from '@nostrify/react';
 import { NLogin, type NLoginType, useNostrLogin } from '@nostrify/react/login';
+import { waitForNostrExtension } from '@/lib/nostrExtension';
 
 // NOTE: This file should not be edited except for adding new login methods.
 
@@ -25,7 +26,9 @@ export function useLoginActions() {
     },
     // Login with a NIP-07 browser extension
     async extension(): Promise<void> {
-      const login = await NLogin.fromExtension();
+      const signer = await waitForNostrExtension();
+      const pubkey = await signer.getPublicKey();
+      const login = new NLogin('extension', pubkey, null);
       activateLogin(login);
     },
     // Log out the current user

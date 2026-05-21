@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from './useCurrentUser';
 import { API_BASE } from '@/lib/apiBase';
 import { createNip98Token } from '@/lib/nip98Auth';
+import { formatNip98SigningError } from '@/lib/nostrExtension';
 
 export interface ScheduleItem {
   time: string;
@@ -35,7 +36,13 @@ export function useEventDetails({ enabled = true }: { enabled?: boolean } = {}) 
       }
 
       const url = `${API_BASE}/api/event`;
-      const token = await createNip98Token(user, url, 'GET');
+      let token: string;
+
+      try {
+        token = await createNip98Token(user, url, 'GET');
+      } catch (error) {
+        throw new Error(formatNip98SigningError(error));
+      }
 
       const response = await fetch(url, {
         method: 'GET',
