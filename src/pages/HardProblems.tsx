@@ -6,9 +6,15 @@ import { SiteLayout } from '@/components/SiteLayout';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLoginActions } from '@/hooks/useLoginActions';
 import { useHardProblems } from '@/hooks/useHardProblems';
+import { useHardProblemsUpvotes } from '@/hooks/useHardProblemsUpvotes';
+import { useUpvoteProblem } from '@/hooks/useUpvoteProblem';
 import { Button } from '@/components/ui/button';
 import { SharedValuesGraphic } from '@/components/hard-problems/SharedValuesGraphic';
 import { HoverOrTapCard } from '@/components/ui/hover-or-tap-card';
+
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 
 // Background and text color per tag — used in both the filter bar and card pills
 const TAG_COLORS: Record<string, { bg: string; text: string }> = {
@@ -32,6 +38,8 @@ const HardProblems = () => {
   const { logout } = useLoginActions();
   const navigate = useNavigate();
   const { data, isLoading, error } = useHardProblems();
+  const { data: upvotesData } = useHardProblemsUpvotes({ enabled: !!user });
+  const upvote = useUpvoteProblem();
   // Tags currently selected in the filter bar
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
 
@@ -200,14 +208,32 @@ const HardProblems = () => {
               No problems match the selected tags.
             </p>
           ) : null}
-          {filteredSections.map((section) => (
+          {filteredSections.map((section) => {
+            const slug = slugify(section.heading);
+            const count = upvotesData?.counts[slug] ?? 0;
+            const hasVoted = upvotesData?.userVotes.includes(slug) ?? false;
+            return (
             <article
               key={section.heading}
               className="bg-card rounded-[18px] p-4 sm:p-5 border border-border shadow-sm flex flex-col gap-3 min-w-0 overflow-hidden"
             >
-              <h2 className="text-[1.35rem] md:text-[1.55rem] font-semibold tracking-[-0.02em] text-foreground">
-                {section.heading}
-              </h2>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-[1.35rem] md:text-[1.55rem] font-semibold tracking-[-0.02em] text-foreground">
+                  {section.heading}
+                </h2>
+                <button
+                  onClick={() => upvote.mutate(slug)}
+                  disabled={upvote.isPending}
+                  aria-label={hasVoted ? 'Remove upvote' : 'Upvote this problem'}
+                  className="flex flex-col items-center gap-1 shrink-0 mt-0.5 px-3 py-2 rounded-xl transition-colors duration-150 disabled:cursor-default"
+                  style={{ color: hasVoted ? '#0f100f' : '#9e9b95' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = hasVoted ? '#716f6a' : '#3f3e3a'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = hasVoted ? '#0f100f' : '#9e9b95'; }}
+                >
+                  <span className="text-[1.5rem] leading-none select-none font-medium">^</span>
+                  <span className="text-xs font-medium leading-none tabular-nums">{count}</span>
+                </button>
+              </div>
               {section.tags && section.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {section.tags.map((tag) => {
@@ -247,7 +273,8 @@ const HardProblems = () => {
                 </div>
               )}
             </article>
-          ))}
+            );
+          })}
         </div>
       </div>
     </SiteLayout>

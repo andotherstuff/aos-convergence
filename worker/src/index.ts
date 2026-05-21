@@ -550,6 +550,14 @@ export default {
       return handleHardProblemsRequest(request, env, headers);
     }
 
+    if (url.pathname === '/api/hard-problems/upvotes' && request.method === 'GET') {
+      return handleHardProblemsUpvotesRequest(request, env, headers);
+    }
+
+    if (url.pathname === '/api/hard-problems/upvote' && request.method === 'POST') {
+      return handleUpvoteProblemRequest(request, env, headers);
+    }
+
     if (url.pathname === '/api/admin/approvals' && request.method === 'GET') {
       return handleListApprovalsRequest(request, env, headers);
     }
@@ -856,6 +864,92 @@ async function handleHardProblemsRequest(
     status: 200,
     headers: { ...headers, 'Content-Type': 'application/json' },
   });
+}
+
+// Upvote counts and per-user votes are stored only in the local wrangler dev KV
+// (`.wrangler/state/`). They are never seeded to or read from production KV.
+async function handleHardProblemsUpvotesRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
+
+  const npub = nip19.npubEncode(verified.pubkey);
+  const approved = await isApprovedNpub(npub, env);
+  if (!approved) {
+    return jsonResponse({ error: 'Not on the approved attendee list', npub }, 403, headers);
+  }
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  const countList = await env.APPROVALS.list({ prefix: 'upvote:count:' });
+  const counts: Record<string, number> = {};
+  await Promise.all(
+    countList.keys.map(async (k) => {
+      const val = await env.APPROVALS!.get(k.name);
+      counts[k.name.slice('upvote:count:'.length)] = val ? parseInt(val, 10) : 0;
+    }),
+  );
+
+  const userList = await env.APPROVALS.list({ prefix: `upvote:user:${npub}:` });
+  const userVotes = userList.keys.map((k) => k.name.slice(`upvote:user:${npub}:`.length));
+
+  return jsonResponse({ counts, userVotes }, 200, headers);
+}
+
+async function handleUpvoteProblemRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'POST');
+  if (verified instanceof Response) return verified;
+
+  const npub = nip19.npubEncode(verified.pubkey);
+  const approved = await isApprovedNpub(npub, env);
+  if (!approved) {
+    return jsonResponse({ error: 'Not on the approved attendee list', npub }, 403, headers);
+  }
+
+  if (!env.APPROVALS) {
+    return jsonResponse({ error: 'APPROVALS KV binding is missing' }, 500, headers);
+  }
+
+  let body: { slug?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, headers);
+  }
+
+  const { slug } = body;
+  if (!slug || typeof slug !== 'string') {
+    return jsonResponse({ error: 'slug is required' }, 400, headers);
+  }
+
+  const userVoteKey = `upvote:user:${npub}:${slug}`;
+  const countKey = `upvote:count:${slug}`;
+  const existing = await env.APPROVALS.get(userVoteKey);
+  const current = await env.APPROVALS.get(countKey);
+  const currentCount = current ? parseInt(current, 10) : 0;
+
+  if (existing) {
+    // Toggle off — remove vote
+    const newCount = Math.max(0, currentCount - 1);
+    await env.APPROVALS.put(countKey, String(newCount));
+    await env.APPROVALS.delete(userVoteKey);
+    return jsonResponse({ count: newCount, voted: false }, 200, headers);
+  }
+
+  // Toggle on — add vote
+  const newCount = currentCount + 1;
+  await env.APPROVALS.put(countKey, String(newCount));
+  await env.APPROVALS.put(userVoteKey, '1');
+  return jsonResponse({ count: newCount, voted: true }, 200, headers);
 }
 
 async function handleListApprovalsRequest(
