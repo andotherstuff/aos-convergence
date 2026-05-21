@@ -4,6 +4,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import Landing from "./pages/Landing";
 import About from "./pages/About";
 import Program from "./pages/Program";
+import ExpressionOfInterest from "./pages/ExpressionOfInterest";
 import EventDetails from "./pages/EventDetails";
 import Projects from "./pages/Projects";
 import HardProblems from "./pages/HardProblems";
@@ -13,11 +14,6 @@ import AdminApprovals from "./pages/AdminApprovals";
 import { NIP19Page } from "./pages/NIP19Page";
 import NotFound from "./pages/NotFound";
 
-// NOTE: ExpressionOfInterest (the application page) is intentionally NOT routed
-// — the application form was taken down from the site but kept in the codebase
-// (src/pages/ExpressionOfInterest.tsx, the admin ApplicationsTab, and the
-// worker endpoints remain) so it can be re-enabled later.
-
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -26,6 +22,7 @@ export function AppRouter() {
         <Route path="/" element={<Landing />} />
         <Route path="/about" element={<About />} />
         <Route path="/program" element={<Program />} />
+        <Route path="/apply" element={<ExpressionOfInterest />} />
         <Route path="/event" element={<EventDetails />} />
         <Route path="/attending" element={<Attending />} />
         <Route path="/projects" element={<Projects />} />
