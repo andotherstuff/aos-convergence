@@ -6,6 +6,7 @@ import About from "./pages/About";
 import Program from "./pages/Program";
 import ExpressionOfInterest from "./pages/ExpressionOfInterest";
 import EventDetails from "./pages/EventDetails";
+import WelcomeGuide from "./pages/WelcomeGuide";
 import Projects from "./pages/Projects";
 import HardProblems from "./pages/HardProblems";
 import Attending from "./pages/Attending";
@@ -24,6 +25,7 @@ export function AppRouter() {
         <Route path="/program" element={<Program />} />
         <Route path="/apply" element={<ExpressionOfInterest />} />
         <Route path="/event" element={<EventDetails />} />
+        <Route path="/welcome-guide" element={<WelcomeGuide />} />
         <Route path="/attending" element={<Attending />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/hard-problems" element={<HardProblems />} />

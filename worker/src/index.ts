@@ -59,6 +59,147 @@ interface NostrAuthEvent {
   id: string;
 }
 
+// Welcome Guide — practical on-the-ground info for approved attendees.
+// Venue address, organiser names, evening plans, etc. — kept out of the
+// public frontend bundle. Inline links use `[text](url)` markdown syntax,
+// parsed safely on the client (no HTML passthrough).
+function getWelcomeGuide(signalGroupLink: string) {
+  return {
+    title: 'Welcome to AOS Convergence',
+    signalGroupLink,
+    intro: [
+      "You're confirmed — here's everything you need on the ground in Oslo. Save this page; we'll keep it updated as small details firm up.",
+    ],
+    sections: [
+      {
+        heading: 'Getting in from the airport',
+        body: [
+          "The fastest and most affordable option is the [Flytoget Airport Express](https://www.flytoget.no/en/) — every 20 minutes from Oslo Lufthavn into the city centre, around USD 30.",
+          "Taxis and Uber run roughly USD 75 for the same trip.",
+        ],
+      },
+      {
+        heading: 'Weather',
+        body: [
+          "Late May/early June in Oslo runs 9–20°C (48–68°F). The sun rises around 4am and sets close to 10pm — pack for long, bright days.",
+          "Rain is always possible. Our venue has deployable covers so we can still use the outdoor area when it turns. [YR](https://www.yr.no/) is the locals' weather app and is usually right.",
+        ],
+      },
+      {
+        heading: 'Dress code',
+        body: [
+          'Come as you are. As long as you won\'t be arrested for public indecency, you\'re good.',
+        ],
+      },
+      {
+        heading: 'The venues',
+        body: [
+          "Both venues are at [Brenneriveien 9C, 0182 Oslo](https://www.google.com/maps/search/?api=1&query=Brenneriveien+9C+0182+Oslo).",
+          "Friday and Saturday we're at [BLÅ](https://www.blaaoslo.no/). After breakfast on Sunday May 31 we move across the road to [Ingensteds](https://www.ingensteds.no/).",
+        ],
+      },
+      {
+        heading: 'When you arrive',
+        body: [
+          "Registration opens at 08:30 on Friday May 29. A light breakfast is served from 09:00.",
+          "Head to BLÅ — there will be security on the gate. Charlie and Susan will be set up at a table near the entrance to check you in, hand over your badge, and pass along a few goodies.",
+        ],
+      },
+      {
+        heading: 'Daily hours',
+        body: [
+          "Friday and Saturday: 08:30–17:00. Sunday: 08:30–15:00. Breakfast daily from 09:00.",
+        ],
+      },
+      {
+        heading: 'Privacy',
+        body: [
+          "Strict rule: no photos or filming of others without their explicit consent. That includes crowd shots and anyone identifiable in the background.",
+        ],
+      },
+      {
+        heading: 'Accessibility',
+        body: [
+          "Ramps cover the ground-floor zones and bathrooms. There are four optional breakout spaces up two flights of stairs.",
+        ],
+      },
+      {
+        heading: 'Security',
+        body: [
+          "Security is on the door at all times and knows the venue well. They'll be checking badges for attendees and staff. If you have any safety concerns, they're available.",
+        ],
+      },
+      {
+        heading: 'Safety',
+        body: [
+          "The team at the entrance keeps fire and evacuation plans on hand. Please let them know if you're heading offsite at any point — it keeps the attendance count accurate.",
+          "If you see anything that concerns you, flag it with the team.",
+        ],
+      },
+      {
+        heading: 'Medical',
+        body: [
+          "Charlie is your onsite medic and keeps basic first-aid supplies at the entrance table. They're certified in First Aid and Pre-Hospital Trauma Life Support. If something comes up during the event, let them know.",
+        ],
+      },
+      {
+        heading: 'WiFi & power',
+        body: [
+          "The venue upgraded its WiFi for us and installed boosters so it reaches every zone. The password is on a sign at the entrance.",
+          "Power outlets are in every zone — including outside — and we have extension leads and multiboards on hand.",
+        ],
+      },
+      {
+        heading: 'Program',
+        body: [
+          "The best place for program details is the [Program page](/program) — it will be printed and posted around the venue. The site also has contact info for attendees, the projects everyone is working on, and the hard problems up for discussion.",
+          "If Open Space is new to you: it's a way for you to host and participate in the collaboration, co-creation, or dialogue that matters most to you. We'll build the agenda on the first day, and everyone chooses their own adventure. Anyone can bring a topic — the only rule is that if you offer it, you host it. We'll have three to four ~1-hour time slots, and six areas around the venue (up to 24+ sessions). If there are more than six ideas in a slot, there are plenty of cozy corners.",
+        ],
+      },
+      {
+        heading: 'Other events at the venue',
+        body: [
+          "BLÅ is an active club, so it runs evening events after we wrap. Some spaces may become unavailable in the late afternoon for setup — Charlie will let you know when and where.",
+          "On Sunday, an artist market runs in the alley next to the venues, so expect a bit more foot traffic.",
+        ],
+      },
+      {
+        heading: 'Evenings',
+        body: [
+          "Karaoke on Friday night has been rumbling in the Signal group. [Star Bar](https://www.starbaroslo.no/) is a 20-minute walk from BLÅ and opens at 19:00 — let Charlie know if you'd like to join.",
+          "Saturday night, [DJ Cashu](https://www.instagram.com/djcashu/) is playing at BLÅ. We're working on a deal so Convergence attendees can get in to see her perform — details to follow in Signal.",
+        ],
+      },
+      {
+        heading: 'Drinks & snacks',
+        body: [
+          "[Espresso Catering](https://espressocatering.no/) is running the coffee cart on site, and non-alcoholic drinks are available at the bar at all times. Fruit and snacks are out in the outdoor area throughout the day.",
+        ],
+      },
+      {
+        heading: 'Menus',
+        body: [
+          "Two caterers: [Nordvegan](https://nordvegan.no/) for the vegan menu, [Plato](https://platocatering.no/) for the non-vegan menu. Both companies prioritise ethical and sustainable meals.",
+          "If you told us about a dietary restriction in advance, it will be catered for and clearly labelled.",
+        ],
+      },
+      {
+        heading: 'Vegetarians',
+        body: [
+          "You'll be primarily catered for by the non-vegan menu, with extras from the vegan menu so you can take from both.",
+        ],
+      },
+      {
+        heading: 'Need anything else?',
+        body: [
+          "For anything not covered here, message Charlie and/or Susan in the Signal group — Signal is the best way to reach the team.",
+          "See you soon!",
+        ],
+      },
+    ],
+  };
+}
+
 // Event details — only returned to approved attendees.
 // These never appear in the frontend bundle.
 function getEventDetails(signalGroupLink: string) {
@@ -393,6 +534,10 @@ export default {
       return handleEventRequest(request, env, headers);
     }
 
+    if (url.pathname === '/api/welcome-guide' && request.method === 'GET') {
+      return handleWelcomeGuideRequest(request, env, headers);
+    }
+
     if (url.pathname === '/api/projects' && request.method === 'GET') {
       return handleProjectsRequest(request, env, headers);
     }
@@ -449,6 +594,24 @@ async function handleEventRequest(
   }
 
   return jsonResponse(getEventDetails(env.SIGNAL_GROUP_LINK), 200, headers);
+}
+
+async function handleWelcomeGuideRequest(
+  request: Request,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const verified = await verifyRequest(request, headers, 'GET');
+  if (verified instanceof Response) return verified;
+
+  const npub = nip19.npubEncode(verified.pubkey);
+  const approved = await isApprovedNpub(npub, env);
+
+  if (!approved) {
+    return jsonResponse({ error: 'Not on the approved attendee list', npub }, 403, headers);
+  }
+
+  return jsonResponse(getWelcomeGuide(env.SIGNAL_GROUP_LINK), 200, headers);
 }
 
 // Attendee project directory — same approved-attendee gate as /api/event.

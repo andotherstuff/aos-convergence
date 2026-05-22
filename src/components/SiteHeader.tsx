@@ -42,6 +42,7 @@ export function SiteHeader() {
             <NavLink to="/" active={isHome}>Home</NavLink>
             <NavLink to="/about" active={location.pathname === '/about'}>About</NavLink>
             <NavLink to="/program" active={location.pathname === '/program'}>Program</NavLink>
+            {currentUser && <NavLink to="/welcome-guide" active={location.pathname === '/welcome-guide'}>Welcome Guide</NavLink>}
             {currentUser && <NavLink to="/attending" active={location.pathname === '/attending'}>Who's Attending</NavLink>}
             {currentUser && <NavLink to="/projects" active={location.pathname === '/projects'}>Projects</NavLink>}
             {currentUser && <NavLink to="/hard-problems" active={location.pathname === '/hard-problems'}>Hard Problems</NavLink>}
@@ -87,6 +88,7 @@ export function SiteHeader() {
             <MobileNavLink to="/" active={isHome}>Home</MobileNavLink>
             <MobileNavLink to="/about" active={location.pathname === '/about'}>About</MobileNavLink>
             <MobileNavLink to="/program" active={location.pathname === '/program'}>Program</MobileNavLink>
+            {currentUser && <MobileNavLink to="/welcome-guide" active={location.pathname === '/welcome-guide'}>Welcome Guide</MobileNavLink>}
             {currentUser && <MobileNavLink to="/attending" active={location.pathname === '/attending'}>Who's Attending</MobileNavLink>}
             {currentUser && <MobileNavLink to="/projects" active={location.pathname === '/projects'}>Projects</MobileNavLink>}
             {currentUser && <MobileNavLink to="/hard-problems" active={location.pathname === '/hard-problems'}>Hard Problems</MobileNavLink>}
