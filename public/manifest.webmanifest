@@ -1,8 +1,30 @@
 {
   "name": "AOS Convergence",
   "short_name": "AOS",
+  "description": "A curated three-day convergence in Oslo for builders, researchers, and leaders working on decentralized systems, freedom tech, Bitcoin, Nostr, and AI.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fbfaf8",
-  "theme_color": "#111211"
+  "theme_color": "#111211",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }
