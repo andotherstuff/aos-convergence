@@ -41,9 +41,12 @@ ICON_OVERRIDES = {
 
 # Per-project EXACT icon URL overrides (by stable id), applied last. Use when a
 # specific favicon URL is known-good and we don't want HTML/site resolution.
+# Empty string forces the monogram fallback in the UI.
 ICON_URL_OVERRIDES = {
     "p_8b8327841d9b": "https://proofmode.org/favicon.ico",  # Proofmode
     "p_3697e5a313b2": "https://bffbtc.org/favicon.ico",  # Bitcoin for Fairness
+    "p_7966d77fa79e": "/gaia-commons.jpg",  # Gaia Commons — site-bundled logo
+    "p_dec22175968e": "",  # Open Systems Foundation — monogram
 }
 
 # Per-project display-title overrides (by stable id), applied after enrichment.
@@ -56,6 +59,8 @@ TITLE_OVERRIDES = {
     "p_7b4ce7cbacb8": "SocialRoots",
     "p_7b6865534ff8": "Open Collective",
     "p_f1276b1ba6bd": "Blacksky Algorithms",
+    "p_7966d77fa79e": "Gaia Commons",
+    "p_dec22175968e": "Open Systems Foundation",
 }
 
 # Per-project description overrides (by stable id), applied after enrichment.
@@ -85,6 +90,8 @@ DESCRIPTION_OVERRIDES = {
         "Building the future of self-governable online communities with "
         "tools that make complex infrastructure simple to deploy."
     ),
+    # LinkedIn-only project — scraper returns the generic login wall copy.
+    "p_dec22175968e": "",  # Open Systems Foundation
 }
 
 # Per-project website-link overrides (by stable id). Replaces website[]
