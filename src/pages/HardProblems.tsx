@@ -51,11 +51,11 @@ const HardProblems = () => {
     return Object.keys(TAG_COLORS).filter(t => seen.has(t));
   }, [data]);
 
-  // OR logic: show a card if it has any active tag; show all when nothing is selected
+  // AND logic: show a card only if it has every active tag; show all when nothing is selected
   const filteredSections = useMemo(() => {
     if (!data) return [];
     if (activeTags.size === 0) return data.sections;
-    return data.sections.filter(s => s.tags?.some(t => activeTags.has(t)));
+    return data.sections.filter(s => [...activeTags].every(t => s.tags?.includes(t)));
   }, [data, activeTags]);
 
   const toggleTag = (tag: string) => {
