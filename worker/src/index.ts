@@ -866,8 +866,6 @@ async function handleHardProblemsRequest(
   });
 }
 
-// Upvote counts and per-user votes are stored only in the local wrangler dev KV
-// (`.wrangler/state/`). They are never seeded to or read from production KV.
 async function handleHardProblemsUpvotesRequest(
   request: Request,
   env: Env,
